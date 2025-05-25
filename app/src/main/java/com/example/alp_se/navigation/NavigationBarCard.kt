@@ -15,11 +15,15 @@ import androidx.compose.ui.res.painterResource
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.alp_se.R
 import com.example.alp_se.view.HomeView
 import com.example.alp_se.view.ProfileScreen
 import com.example.alp_se.view.TournamentView
+import com.example.alp_se.view.TeamScreen
+import com.example.alp_se.view.CreateTeamScreen
 import com.example.alp_se.viewModels.TournamentViewModel
+import com.example.alp_se.viewModels.TeamViewModel
 
 @Composable
 fun BottomNavigationBar(navController: NavHostController) {
@@ -32,7 +36,7 @@ fun BottomNavigationBar(navController: NavHostController) {
         R.drawable.baseline_person_24
     )
     val activeColor = Color(0xFFFFC107) // Yellow color for active item
-    val inactiveColor = Color(0xFF6B90B6) // Grey color for inactive item)
+    val inactiveColor = Color(0xFF6B90B6) // Grey color for inactive item
 
     var selectedItem by remember { mutableStateOf(0) }
     NavigationBar(containerColor = Color(0xFF222222)) {
@@ -41,17 +45,28 @@ fun BottomNavigationBar(navController: NavHostController) {
                 selected = selectedItem == index,
                 onClick = {
                     selectedItem = index
-                    navController.navigate(item) // Navigate to selected page
+                    navController.navigate(item) {
+                        // Pop up to the start destination to avoid building up a large stack
+                        popUpTo(navController.graph.startDestinationId) {
+                            saveState = true
+                        }
+                        // Avoid multiple copies of the same destination
+                        launchSingleTop = true
+                        // Restore state when reselecting a previously selected item
+                        restoreState = true
+                    }
                 },
                 icon = {
                     Icon(
                         painter = painterResource(id = icons[index]),
-                        contentDescription = item
+                        contentDescription = item,
+                        tint = if (selectedItem == index) activeColor else inactiveColor
                     )
                 },
                 label = {
                     Text(
                         text = item,
+                        color = if (selectedItem == index) activeColor else inactiveColor
                     )
                 }
             )
@@ -70,14 +85,41 @@ fun NavigationGraph(
         startDestination = "Home",
         modifier = modifier
     ) {
-        composable("Home") { HomeView(navController = navController) }
-//        composable("News") { NewsScreen(navController = navController) }
+        composable("Home") {
+            HomeView(navController = navController)
+        }
+
+        // Uncomment when NewsScreen is implemented
+        // composable("News") {
+        //     NewsScreen(navController = navController)
+        // }
+
         composable("Tournament") {
             TournamentView(
                 navController = navController,
-                tournamentViewModel
+                tournamentViewModel = tournamentViewModel
             )
         }
-        composable("Profile") { ProfileScreen(navController = navController) }
+
+        composable("Team") {
+            val teamViewModel: TeamViewModel = viewModel()
+            TeamScreen(
+                teamViewModel = teamViewModel
+            )
+        }
+
+        composable("CreateTeam") {
+            val teamViewModel: TeamViewModel = viewModel()
+            CreateTeamScreen(
+                teamViewModel = teamViewModel,
+                onNavigateBack = {
+                    navController.popBackStack()
+                }
+            )
+        }
+
+        composable("Profile") {
+            ProfileScreen(navController = navController)
+        }
     }
 }
