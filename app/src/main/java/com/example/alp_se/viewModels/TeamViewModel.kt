@@ -3,23 +3,28 @@ package com.example.alp_se.viewModels
 import android.content.Context
 import android.net.Uri
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import androidx.lifecycle.viewmodel.initializer
-import androidx.lifecycle.viewmodel.viewModelFactory
-import com.example.alp_se.EshypeApplication
-import com.example.alp_se.models.*
+import com.example.alp_se.models.Team
 import com.example.alp_se.services.TeamService
+import com.example.alp_se.repositories.NetworkTeamRepository
+import com.example.alp_se.services.TeamApiService
+import com.example.alp_se.uiStates.TeamUIState
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import retrofit2.Retrofit
+import retrofit2.converter.gson.GsonConverterFactory
+import okhttp3.OkHttpClient
+import okhttp3.logging.HttpLoggingInterceptor
 
-class TeamViewModel(
-    private val teamService: TeamService
-) : ViewModel() {
+class TeamViewModel : ViewModel() {
+
+    private val teamService: TeamService by lazy {
+        initializeTeamService()
+    }
 
     private val _uiState = MutableStateFlow(TeamUIState())
     val uiState: StateFlow<TeamUIState> = _uiState.asStateFlow()
@@ -28,6 +33,28 @@ class TeamViewModel(
 
     init {
         loadTeams()
+    }
+
+    private fun initializeTeamService(): TeamService {
+        val baseUrl = "http://192.168.88.43:3000/"
+
+        val logging = HttpLoggingInterceptor()
+        logging.level = HttpLoggingInterceptor.Level.BODY
+
+        val client = OkHttpClient.Builder()
+            .addInterceptor(logging)
+            .build()
+
+        val retrofit = Retrofit.Builder()
+            .addConverterFactory(GsonConverterFactory.create())
+            .client(client)
+            .baseUrl(baseUrl)
+            .build()
+
+        val teamApiService = retrofit.create(TeamApiService::class.java)
+        val teamRepository = NetworkTeamRepository(teamApiService)
+
+        return TeamService(teamRepository)
     }
 
     fun loadTeams() {
@@ -203,15 +230,5 @@ class TeamViewModel(
 
     fun getImageUrl(imagePath: String): String {
         return teamService.getImageUrl(imagePath)
-    }
-
-    companion object {
-        val Factory: ViewModelProvider.Factory = viewModelFactory {
-            initializer {
-                val application = (this[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY] as EshypeApplication)
-                val teamService = TeamService(application.container.teamRepository)
-                TeamViewModel(teamService = teamService)
-            }
-        }
     }
 }

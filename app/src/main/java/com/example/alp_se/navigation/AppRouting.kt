@@ -1,4 +1,3 @@
-//AppRouting.kt
 package com.example.alp_se.navigation
 
 import androidx.compose.foundation.layout.padding
@@ -14,21 +13,20 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.example.alp_se.view.CreateTeamView
 import com.example.alp_se.view.CreateTournament
 import com.example.alp_se.view.HomeView
 import com.example.alp_se.view.TeamView
-import com.example.alp_se.view.CreateTeamView
 import com.example.alp_se.view.TournamentDetailView
 import com.example.alp_se.view.TournamentTeamSubmit
 import com.example.alp_se.view.TournamentView
 import com.example.alp_se.viewModels.TeamViewModel
 import com.example.alp_se.viewModels.TournamentViewModel
 
-
 @Composable
 fun AppRouting(
     tournamentViewModel: TournamentViewModel = viewModel(factory = TournamentViewModel.Factory),
-    teamViewModel: TeamViewModel = viewModel()
+    teamViewModel: TeamViewModel = viewModel() // Now using simple viewModel() without factory
 ) {
     val navController = rememberNavController()
     val currentBackStackEntry by navController.currentBackStackEntryAsState()

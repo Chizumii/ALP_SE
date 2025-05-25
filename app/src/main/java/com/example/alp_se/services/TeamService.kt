@@ -45,7 +45,7 @@ class TeamService(
     private val teamRepository: TeamRepository
 ) {
     companion object {
-        private const val BASE_URL = "http://192.168.249.69:3000/"
+        private const val BASE_URL = "http://192.168.88.43:3000/"
     }
 
     suspend fun createTeam(namatim: String, imageUri: Uri, context: Context): Result<Team> {
