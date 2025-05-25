@@ -10,5 +10,10 @@ sealed class Screen(val route: String) {
     object TournamentSubmit : Screen("tournament_submit/{TournamentID}") {
         fun createRoute(TournamentID: Int) = "tournament_submit/$TournamentID"
     }
+    object Team : Screen("team")
+    object TeamCreate : Screen("team_create")
+    object TeamEdit : Screen("team_edit/{teamId}") {
+        fun createRoute(teamId: Int) = "team_edit/$teamId"
+    }
     object Profile: Screen("Profile")
 }

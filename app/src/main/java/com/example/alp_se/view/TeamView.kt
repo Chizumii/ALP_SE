@@ -6,13 +6,16 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -26,29 +29,36 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.NavHostController
-import androidx.navigation.compose.rememberNavController
+import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.example.alp_se.R
 import com.example.alp_se.models.Team
+import com.example.alp_se.navigation.Screen
 import com.example.alp_se.viewModels.TeamViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TeamScreen(
-    teamViewModel: TeamViewModel = viewModel(),
-    navController: NavHostController? = null
+fun TeamView(
+    navController: NavController,
+    teamViewModel: TeamViewModel = viewModel()
 ) {
     val uiState by teamViewModel.uiState.collectAsState()
-    val context = LocalContext.current
+    var showDeleteDialog by remember { mutableStateOf<Team?>(null) }
 
     LaunchedEffect(Unit) {
         teamViewModel.loadTeams()
+    }
+
+    // Handle success messages
+    LaunchedEffect(uiState.createSuccess, uiState.updateSuccess, uiState.deleteSuccess) {
+        if (uiState.createSuccess || uiState.updateSuccess || uiState.deleteSuccess) {
+            teamViewModel.clearSuccessFlags()
+            teamViewModel.loadTeams()
+        }
     }
 
     // Show error messages
@@ -62,19 +72,17 @@ fun TeamScreen(
     Scaffold(
         containerColor = Color(0xFF222222),
         floatingActionButton = {
-            if (navController != null) {
-                FloatingActionButton(
-                    onClick = {
-                        navController.navigate("CreateTeam")
-                    },
-                    containerColor = Color(0xFF5A5AFF),
-                    contentColor = Color.White
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Add,
-                        contentDescription = "Create Team"
-                    )
-                }
+            FloatingActionButton(
+                onClick = {
+                    navController.navigate(Screen.TeamCreate.route)
+                },
+                containerColor = Color(0xFF5A5AFF),
+                contentColor = Color.White
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Add,
+                    contentDescription = "Create Team"
+                )
             }
         }
     ) { paddingValues ->
@@ -86,7 +94,10 @@ fun TeamScreen(
         ) {
             // Top Bar
             TopBar(
-                onRefresh = { teamViewModel.refresh() }
+                onRefresh = {
+                    teamViewModel.clearError()
+                    teamViewModel.loadTeams()
+                }
             )
 
             // Search Bar
@@ -104,17 +115,29 @@ fun TeamScreen(
                     uiState.isLoading -> {
                         LoadingState()
                     }
+                    uiState.error != null -> {
+                        ErrorState(
+                            error = uiState.error!!,
+                            onRetry = {
+                                teamViewModel.clearError()
+                                teamViewModel.loadTeams()
+                            }
+                        )
+                    }
                     uiState.showEmptyState -> {
                         EmptyState()
                     }
                     uiState.showNoSearchResults -> {
-                        NoSearchResultsState()
+                        NoSearchResultsState(searchQuery = uiState.searchQuery)
                     }
                     else -> {
                         TeamList(
                             teams = uiState.displayTeams,
-                            onTeamClick = { team ->
-                                teamViewModel.selectTeam(team)
+                            onEditClick = { team ->
+                                navController.navigate(Screen.TeamEdit.createRoute(team.teamId))
+                            },
+                            onDeleteClick = { team ->
+                                showDeleteDialog = team
                             },
                             getImageUrl = { imagePath ->
                                 teamViewModel.getImageUrl(imagePath)
@@ -124,6 +147,30 @@ fun TeamScreen(
                 }
             }
         }
+    }
+
+    // Delete confirmation dialog
+    showDeleteDialog?.let { team ->
+        AlertDialog(
+            onDismissRequest = { showDeleteDialog = null },
+            title = { Text("Delete Team") },
+            text = { Text("Are you sure you want to delete ${team.namatim}?") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        teamViewModel.deleteTeam(team.teamId)
+                        showDeleteDialog = null
+                    }
+                ) {
+                    Text("Delete", color = Color.Red)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteDialog = null }) {
+                    Text("Cancel")
+                }
+            }
+        )
     }
 }
 
@@ -229,7 +276,8 @@ fun SearchBar(
 @Composable
 fun TeamList(
     teams: List<Team>,
-    onTeamClick: (Team) -> Unit,
+    onEditClick: (Team) -> Unit,
+    onDeleteClick: (Team) -> Unit,
     getImageUrl: (String) -> String
 ) {
     LazyColumn(
@@ -240,7 +288,8 @@ fun TeamList(
         items(teams) { team ->
             TeamCard(
                 team = team,
-                onClick = { onTeamClick(team) },
+                onEditClick = { onEditClick(team) },
+                onDeleteClick = { onDeleteClick(team) },
                 imageUrl = getImageUrl(team.image)
             )
         }
@@ -250,13 +299,12 @@ fun TeamList(
 @Composable
 fun TeamCard(
     team: Team,
-    onClick: () -> Unit,
+    onEditClick: () -> Unit,
+    onDeleteClick: () -> Unit,
     imageUrl: String
 ) {
     Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable { onClick() },
+        modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
             containerColor = Color(0xFF333333)
         ),
@@ -279,8 +327,12 @@ fun TeamCard(
                 placeholder = painterResource(id = R.drawable.__t_33pnkrfv_vlnxkbrsnya),
                 error = painterResource(id = R.drawable.__t_33pnkrfv_vlnxkbrsnya)
             )
+
             Spacer(modifier = Modifier.width(16.dp))
-            Column {
+
+            Column(
+                modifier = Modifier.weight(1f)
+            ) {
                 Text(
                     text = "Team ID: ${team.teamId}",
                     color = Color.Gray,
@@ -292,6 +344,45 @@ fun TeamCard(
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold
                 )
+            }
+
+            // Action Buttons
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                IconButton(
+                    onClick = onEditClick,
+                    modifier = Modifier
+                        .size(40.dp)
+                        .background(
+                            Color(0xFF5A5AFF),
+                            CircleShape
+                        )
+                ) {
+                    Icon(
+                        Icons.Default.Edit,
+                        contentDescription = "Edit",
+                        tint = Color.White,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+
+                IconButton(
+                    onClick = onDeleteClick,
+                    modifier = Modifier
+                        .size(40.dp)
+                        .background(
+                            Color.Red,
+                            CircleShape
+                        )
+                ) {
+                    Icon(
+                        Icons.Default.Delete,
+                        contentDescription = "Delete",
+                        tint = Color.White,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
             }
         }
     }
@@ -320,6 +411,38 @@ fun LoadingState() {
 }
 
 @Composable
+fun ErrorState(
+    error: String,
+    onRetry: () -> Unit
+) {
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                text = error,
+                color = Color.Red,
+                fontSize = 16.sp,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.padding(horizontal = 16.dp)
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+            Button(
+                onClick = onRetry,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFF5A5AFF)
+                )
+            ) {
+                Text("Retry", color = Color.White)
+            }
+        }
+    }
+}
+
+@Composable
 fun EmptyState() {
     Box(
         modifier = Modifier.fillMaxSize(),
@@ -336,7 +459,7 @@ fun EmptyState() {
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = "There are no teams available at the moment",
+                text = "Create your first team to get started",
                 color = Color.Gray,
                 fontSize = 14.sp,
                 textAlign = TextAlign.Center
@@ -346,7 +469,7 @@ fun EmptyState() {
 }
 
 @Composable
-fun NoSearchResultsState() {
+fun NoSearchResultsState(searchQuery: String) {
     Box(
         modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
@@ -355,10 +478,11 @@ fun NoSearchResultsState() {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = "No results found",
+                text = "No teams found for \"$searchQuery\"",
                 color = Color.White,
                 fontSize = 18.sp,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Center
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
@@ -369,10 +493,4 @@ fun NoSearchResultsState() {
             )
         }
     }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun TeamScreenPreview() {
-    TeamScreen(navController = rememberNavController())
 }
