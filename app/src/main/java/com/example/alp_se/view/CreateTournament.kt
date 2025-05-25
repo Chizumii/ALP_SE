@@ -1,6 +1,8 @@
 package com.example.alp_se.view
 
+import android.content.Context
 import android.net.Uri
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
@@ -14,13 +16,23 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -29,6 +41,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -40,17 +53,26 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import coil.compose.rememberAsyncImagePainter
 import com.example.alp_se.R
+import com.example.alp_se.uiStates.StringDataStatusUIState
 import com.example.alp_se.viewModels.TournamentViewModel
+import androidx.compose.material3.MenuDefaults
+import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
+
 
 @Composable
 fun CreateTournament(
     navController: NavController,
-    tournamentViewModel: TournamentViewModel
+    tournamentViewModel: TournamentViewModel,
+    context: Context,
+    token: String
 ) {
-//    val availableLocations = listOf(tournamentViewModel.lokasiInput)
     var imageInput by remember { mutableStateOf(tournamentViewModel.imageInput) }
-    var namaInput by remember { mutableStateOf(tournamentViewModel.nameTournamentInput) }
-    var deskripsiInput by remember { mutableStateOf(tournamentViewModel.descriptionInput) }
+    var nameInput by remember { mutableStateOf(tournamentViewModel.nameTournamentInput) }
+    var descriptionInput by remember { mutableStateOf(tournamentViewModel.descriptionInput) }
     var costInput by remember { mutableStateOf(tournamentViewModel.costInput) }
     var typeInput by remember { mutableStateOf(tournamentViewModel.typeInput) }
 
@@ -63,6 +85,13 @@ fun CreateTournament(
             }
         }
     )
+
+    LaunchedEffect(tournamentViewModel.submissionStatus) {
+        val dataStatus = tournamentViewModel.submissionStatus
+        if (dataStatus is StringDataStatusUIState.Success) {
+            Toast.makeText(context, dataStatus.data, Toast.LENGTH_SHORT).show()
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -151,7 +180,8 @@ fun CreateTournament(
                                 text = "Upload Tournament Banner",
                                 color = Color.White,
                                 fontSize = 16.sp,
-                                modifier = Modifier.padding(top = 8.dp)
+                                textAlign = TextAlign.Center,
+                                modifier = Modifier.padding(top = 8.dp).fillMaxWidth()
                             )
                         }
                     }
@@ -183,7 +213,7 @@ fun CreateTournament(
                     CustomTextField(
                         value = tournamentViewModel.nameTournamentInput,
                         onValueChange = {
-                            namaInput = it
+                            nameInput = it
                             tournamentViewModel.updateNameTournamentInput(it)
                         },
                         label = "Tournament Name"
@@ -194,7 +224,7 @@ fun CreateTournament(
                     CustomTextField(
                         value = tournamentViewModel.descriptionInput,
                         onValueChange = {
-                            deskripsiInput = it
+                            descriptionInput = it
                             tournamentViewModel.updateDescriptionInput(it)
                         },
                         label = "Description",
@@ -203,24 +233,20 @@ fun CreateTournament(
 
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    CustomTextField(
-                        value = tournamentViewModel.costInput,
-                        onValueChange = {
-                            costInput = it
-                            tournamentViewModel.updateCostInput(it)
+                    DoubleTextField(
+                        value = costInput,
+                        onValueChange = { newDouble ->
+                            costInput = newDouble
                         },
                         label = "Entry Cost"
                     )
 
+
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    CustomTextField(
-                        value = tournamentViewModel.typeInput,
-                        onValueChange = {
-                            typeInput = it
-                            tournamentViewModel.updateTypeInput(it)
-                        },
-                        label = "Tournament Type"
+                    BestOfDropdown(
+                        selectedOption = tournamentViewModel.typeInput,
+                        onOptionSelected = { tournamentViewModel.typeInput = it }
                     )
                 }
             }
@@ -231,13 +257,14 @@ fun CreateTournament(
                 Button(
                     onClick = {
                         tournamentViewModel.createTournament(
-                            navController,
-                            namaInput,
-                            deskripsiInput,
-                            costInput,
-                            imageInput,
-                            typeInput,
-                            tournamentViewModel.lokasiInput
+                            navController = navController,
+                           nameTournamentInput =  nameInput,
+                           descriptionInput=  descriptionInput,
+                           costInput =  costInput,
+                           imageInput =  imageInput,
+                           typeInput =  typeInput,
+                           lokasi =  tournamentViewModel.lokasiInput,
+                           token =  token
                         )
                         navController.navigate("Tournament")
                     },
@@ -291,12 +318,125 @@ private fun CustomTextField(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun DoubleTextField(
+    value: Double,
+    onValueChange: (Double) -> Unit,
+    label: String,
+    maxLines: Int = 1
+) {
+    // keep the textual representation in sync with `value`
+    var text by remember(value) {
+        mutableStateOf(if (value == 0.0) "" else value.toString())
+    }
+    val focusManager = LocalFocusManager.current
+
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Text(
+            text = label,
+            color = Color.White,
+            fontSize = 14.sp,
+            modifier = Modifier.padding(bottom = 8.dp)
+        )
+        OutlinedTextField(
+            value = text,
+            onValueChange = { newText ->
+                // allow only digits and one decimal point
+                if (newText.matches(Regex("^\\d*\\.?\\d*\$"))) {
+                    text = newText
+                    // update the Double if parsable
+                    newText.toDoubleOrNull()?.let { onValueChange(it) }
+                }
+            },
+            singleLine = true,
+            keyboardOptions = KeyboardOptions(
+                keyboardType = KeyboardType.Decimal,
+                imeAction = ImeAction.Done
+            ),
+            keyboardActions = KeyboardActions(
+                onDone = { focusManager.clearFocus() }
+            ),
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(Color(0xFF2D2D2D), RoundedCornerShape(12.dp)),
+            textStyle = TextStyle(
+                color = Color.White,
+                fontSize = 16.sp
+            ),
+            shape = RoundedCornerShape(12.dp),
+            maxLines = maxLines
+        )
+    }
+}
+
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun BestOfDropdown(
+    selectedOption: String,
+    onOptionSelected: (String) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val options = listOf("Best of 1", "Best of 3")
+    var expanded by remember { mutableStateOf(false) }
+
+    ExposedDropdownMenuBox(
+        expanded = expanded,
+        onExpandedChange = { expanded = !expanded },
+        modifier = modifier
+    ) {
+        // your existing OutlinedTextField styling...
+        OutlinedTextField(
+            value = selectedOption,
+            onValueChange = { /* readOnly */ },
+            readOnly = true,
+            label = { Text("Match Format", color = Color.White) },
+            trailingIcon = {
+                ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
+            },
+            modifier = Modifier
+                .menuAnchor()
+                .fillMaxWidth()
+                .background(Color(0xFF2D2D2D), RoundedCornerShape(12.dp)),
+            textStyle = TextStyle(color = Color.White, fontSize = 16.sp),
+            shape = RoundedCornerShape(12.dp),
+        )
+
+        // instead of ExposedDropdownMenu, use DropdownMenu so you can set containerColor
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false },
+            modifier = Modifier
+                .exposedDropdownSize(matchTextFieldWidth = true),         // :contentReference[oaicite:0]{index=0}
+                      // :contentReference[oaicite:1]{index=1}
+        ) {
+            options.forEach { option ->
+                DropdownMenuItem(
+                    text = { Text(option) },
+                    onClick = {
+                        onOptionSelected(option)
+                        expanded = false
+                    },
+
+                )
+            }
+        }
+    }
+}
+
+
+
+
+
 @Preview(showBackground = true)
 @Composable
 fun CreateTournamentPreview() {
     CreateTournament(
         navController = rememberNavController(),
-        tournamentViewModel = viewModel<TournamentViewModel>(factory = TournamentViewModel.Factory)
+        tournamentViewModel = viewModel<TournamentViewModel>(factory = TournamentViewModel.Factory),
+        context = LocalContext.current,
+        token = ""
     )
 }
 

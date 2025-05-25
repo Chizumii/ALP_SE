@@ -21,6 +21,8 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.navigation.compose.rememberNavController
 import com.example.alp_se.R
 import com.example.alp_se.models.LoginUserRequest
 @OptIn(ExperimentalMaterial3Api::class)
@@ -99,4 +101,10 @@ fun LoginScreen() {
             }
         }
     }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun LoginPreview() {
+    LoginScreen()
 }

@@ -15,8 +15,9 @@ interface TournamentRepository {
         description: String,
         image: String,
         tipe: String,
-        biaya: String,
-        LokasiID: Int
+        biaya: Double,
+        lokasi: String,
+        token: String
     ): Call<GeneralResponseModel>
 
     fun updateTournament(
@@ -24,8 +25,8 @@ interface TournamentRepository {
         description: String,
         image: String,
         tipe: String,
-        biaya: String,
-        lokasiID: Int
+        biaya: Double,
+        lokasi: String
     ): Call<TournamentResponse>
 
     fun deleteTournament(
@@ -33,13 +34,13 @@ interface TournamentRepository {
         description: String,
         image: String,
         tipe: String,
-        biaya: String,
-        LokasiID: Int
+        biaya: Double,
+        lokasi: String
     ): Call<TournamentResponse>
 
    suspend fun getALLTournament(
 //        token: String,
-        lokasiID: Int
+        lokasi: String
     ): Response<listTournament>
 }
 
@@ -50,12 +51,11 @@ class NetworkTournamentRepository(
 
     override suspend fun getALLTournament(
 //        token: String,
-        lokasiID: Int
+        lokasi: String
     ): Response<listTournament> {
 //        val token = "X-API-SERVICE"
         return tournamentServiceApi.getAllTournament(
 //            token,
-            lokasiID
         )
     }
 
@@ -64,8 +64,9 @@ class NetworkTournamentRepository(
         description: String,
         image: String,
         tipe: String,
-        biaya: String,
-        LokasiID: Int
+        biaya: Double,
+        lokasi: String,
+        token: String
     ): Call<GeneralResponseModel> {
         val request = TournamentRequest(
             nama_tournament = nama_tournament,
@@ -73,9 +74,9 @@ class NetworkTournamentRepository(
             image = image,
             tipe = tipe,
             biaya = biaya,
-            LokasiID = LokasiID
+            lokasi = lokasi
         )
-        return tournamentServiceApi.createTournament(request)
+        return tournamentServiceApi.createTournament(token, request)
     }
 
     override fun updateTournament(
@@ -83,8 +84,8 @@ class NetworkTournamentRepository(
         description: String,
         image: String,
         tipe: String,
-        biaya: String,
-        LokasiID: Int
+        biaya: Double,
+        lokasi: String
     ): Call<TournamentResponse> {
         val token = "X-API-SERVICE"
         return tournamentServiceApi.updateTournament(
@@ -94,7 +95,7 @@ class NetworkTournamentRepository(
             image,
             tipe,
             biaya,
-            LokasiID
+            lokasi
         )
 
     }
@@ -104,8 +105,8 @@ class NetworkTournamentRepository(
         description: String,
         image: String,
         tipe: String,
-        biaya: String,
-        LokasiID: Int
+        biaya: Double,
+        lokasi: String
     ): Call<TournamentResponse> {
         val token = "X-API-SERVICE"
         return tournamentServiceApi.deleteTournament(
@@ -115,7 +116,7 @@ class NetworkTournamentRepository(
             image,
             tipe,
             biaya,
-            LokasiID
+            lokasi
         )
     }
 }

@@ -14,6 +14,7 @@ import androidx.navigation.NavController
 import com.example.alp_se.EshypeApplication
 import com.example.alp_se.enums.PagesEnum
 import com.example.alp_se.models.GeneralResponseModel
+import com.example.alp_se.models.TournamentModel
 import com.example.alp_se.models.TournamentResponse
 import com.example.alp_se.navigation.Screen
 import com.example.alp_se.repositories.TournamentRepository
@@ -48,9 +49,9 @@ class TournamentViewModel(
 
     var typeInput by mutableStateOf("")
 
-    var costInput by mutableStateOf("")
+    var costInput by mutableStateOf(0.0)
 
-    var lokasiInput by mutableStateOf(1)
+    var lokasiInput by mutableStateOf("")
 
     private val _tournament = MutableStateFlow<MutableList<TournamentResponse>>(mutableListOf())
 
@@ -75,13 +76,15 @@ class TournamentViewModel(
         typeInput = input
     }
 
-    fun updateCostInput(input: String) {
+    fun updateCostInput(input: Double) {
         costInput = input
     }
 
-    fun updateLokasiInput(input: Int) {
+    fun updateLokasiInput(input: String) {
         lokasiInput = input
     }
+
+
 
     companion object {
         val Factory: ViewModelProvider.Factory = viewModelFactory {
@@ -100,15 +103,15 @@ class TournamentViewModel(
         tournamentList = newList
     }
 
-    fun fetchActivities(
+    fun fetchTournaments(
 //        token: String,
-        lokasiID: Int
+        lokasi: String
     ) {
         viewModelScope.launch {
             try {
                 val response = tournamentRepository.getALLTournament(
 //                    token = token,
-                    lokasiID,
+                    lokasi,
                 )
                 if (response.isSuccessful) {
                     val tournament = response.body()?.data
@@ -128,14 +131,22 @@ class TournamentViewModel(
         }
     }
 
+    fun getTournament(
+        navController: NavController,
+        tournament: TournamentModel
+    ){
+
+    }
+
     fun createTournament(
         navController: NavController,
         nameTournamentInput: String,
         descriptionInput: String,
         imageInput: String,
         typeInput: String,
-        costInput: String,
-        LokasiID: Int
+        costInput: Double,
+        lokasi: String,
+        token: String
 
     ) {
         viewModelScope.launch {
@@ -146,7 +157,8 @@ class TournamentViewModel(
                     image = imageInput,
                     tipe = typeInput,
                     biaya = costInput,
-                    LokasiID = LokasiID
+                    lokasi = lokasiInput,
+                    token = token
                 )
 
                 val response = suspendCancellableCoroutine { continuation ->

@@ -41,9 +41,9 @@ fun TournamentView(
     val tournament by tournamentViewModel.tounament.collectAsState()
 
     LaunchedEffect(Unit) {
-        tournamentViewModel.fetchActivities(
+        tournamentViewModel.fetchTournaments(
 //            token = tournamentViewModel.
-            lokasiID = tournamentViewModel.lokasiInput
+            lokasi = tournamentViewModel.lokasiInput
         )
     }
 

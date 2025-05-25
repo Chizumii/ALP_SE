@@ -38,7 +38,7 @@ fun TorunamentCard(
         modifier = Modifier
             .fillMaxWidth()
             .padding(16.dp)
-            .clickable { navController.navigate(Screen.TournamentDetail.createRoute(tournament.TournamentID))} // Handle click
+            .clickable { navController.navigate("tournamentDetail")} // Handle click
     ) {
         Column(
             modifier = Modifier

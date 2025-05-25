@@ -20,6 +20,7 @@ interface TournamentServiceApi {
 
     @POST("/api/tournament")
     fun createTournament(
+        @Header("X-API-TOKEN") token: String,
         @Body request: TournamentRequest
     ): Call<GeneralResponseModel>
 
@@ -27,7 +28,6 @@ interface TournamentServiceApi {
     @GET("/api/tournament")
     suspend fun getAllTournament(
 //        @Header("X-API-TOKEN") token: String,
-        @Query("LokasiID") lokasiID: Int
     ): Response<listTournament>
 
 
@@ -43,8 +43,8 @@ interface TournamentServiceApi {
         @Body request: String,
         image: String,
         tipe: String,
-        biaya: String,
-        LokasiID: Int
+        biaya: Double,
+        lokasi: String
     ): Call<TournamentResponse>
 
     @DELETE("/api/tournaments/{id}")
@@ -54,7 +54,7 @@ interface TournamentServiceApi {
         description: String,
         image: String,
         tipe: String,
-        biaya: String,
-        lokasiID: Int
+        biaya: Double,
+        lokasi: String
     ): Call<TournamentResponse>
 }

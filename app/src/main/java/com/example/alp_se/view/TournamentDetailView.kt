@@ -158,7 +158,7 @@ fun TournamentDetailView(
                         fontWeight = FontWeight.Bold
                     )
                     Text(
-                        text = tournament.biaya,
+                        text = tournament.biaya.toString(),
                         fontSize = 14.sp,
                         color = Color.White
                     )

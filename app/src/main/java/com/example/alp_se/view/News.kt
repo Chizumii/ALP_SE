@@ -17,6 +17,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
+import androidx.navigation.compose.rememberNavController
 import com.example.alp_se.R
 
 // Data class for News
@@ -27,7 +29,14 @@ data class NewsItem(
 )
 
 @Composable
-fun NewsScreen(newsList: List<NewsItem>, modifier: Modifier = Modifier) {
+fun NewsScreen(navController: NavController, modifier: Modifier = Modifier) {
+    val newsList = List(10) { index ->
+        NewsItem(
+            imageRes = R.drawable.shortnsweet,
+            title = "M6 Bracket MLBB $index",
+            description = "Preview Detail for item $index"
+        )
+    }
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -79,47 +88,6 @@ fun NewsScreen(newsList: List<NewsItem>, modifier: Modifier = Modifier) {
                 Divider(color = Color.Gray, thickness = 1.dp)
             }
         }
-
-        // Bottom Navigation
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(Color(0xFF222222))
-        ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(10.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceAround
-            ) {
-                Image(
-                    painter = painterResource(id = R.drawable.baseline_home_filled_24),
-                    contentDescription = "Home",
-                    modifier = Modifier.size(40.dp)
-                )
-                Image(
-                    painter = painterResource(id = R.drawable.baseline_search_24),
-                    contentDescription = "Search",
-                    modifier = Modifier.size(40.dp)
-                )
-                Image(
-                    painter = painterResource(id = R.drawable.champion),
-                    contentDescription = "Champion",
-                    modifier = Modifier.size(40.dp)
-                )
-                Image(
-                    painter = painterResource(id = R.drawable.baseline_groups_24),
-                    contentDescription = "Team",
-                    modifier = Modifier.size(40.dp)
-                )
-                Image(
-                    painter = painterResource(id = R.drawable.baseline_person_24),
-                    contentDescription = "Profile",
-                    modifier = Modifier.size(40.dp)
-                )
-            }
-        }
     }
 }
 
@@ -166,5 +134,5 @@ fun NewsScreenPreview() {
             description = "Preview Detail for item $index"
         )
     }
-    NewsScreen(newsList = previewNewsList)
+    NewsScreen(navController = rememberNavController())
 }
