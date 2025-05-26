@@ -35,6 +35,7 @@ class TeamViewModel : ViewModel() {
         loadTeams()
     }
 
+
     private fun initializeTeamService(): TeamService {
         val baseUrl = "http://192.168.88.43:3000/"
 
@@ -56,7 +57,33 @@ class TeamViewModel : ViewModel() {
 
         return TeamService(teamRepository)
     }
+    fun selectTeam(team: Team) {
+        _uiState.value = _uiState.value.copy(selectedTeam = team)
+    }
 
+    fun clearSelectedTeam() {
+        _uiState.value = _uiState.value.copy(selectedTeam = null)
+    }
+
+    fun clearError() {
+        _uiState.value = _uiState.value.copy(error = null)
+    }
+
+    fun clearSuccessFlags() {
+        _uiState.value = _uiState.value.copy(
+            createSuccess = false,
+            updateSuccess = false,
+            deleteSuccess = false
+        )
+    }
+
+    fun refresh() {
+        loadTeams()
+    }
+
+    fun getImageUrl(imagePath: String): String {
+        return teamService.getImageUrl(imagePath)
+    }
     fun loadTeams() {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true, error = null)
@@ -80,7 +107,7 @@ class TeamViewModel : ViewModel() {
         }
     }
 
-    fun searchTeams(query: String) {
+    fun searchTeam(query: String) {
         _uiState.value = _uiState.value.copy(searchQuery = query)
 
         searchJob?.cancel()
@@ -98,7 +125,7 @@ class TeamViewModel : ViewModel() {
             // Add a small delay to avoid too many API calls while typing
             delay(300)
 
-            teamService.searchTeams(query).fold(
+            teamService.searchTeam(query).fold(
                 onSuccess = { filteredTeams ->
                     _uiState.value = _uiState.value.copy(
                         filteredTeams = filteredTeams,
@@ -204,31 +231,5 @@ class TeamViewModel : ViewModel() {
         }
     }
 
-    fun selectTeam(team: Team) {
-        _uiState.value = _uiState.value.copy(selectedTeam = team)
-    }
 
-    fun clearSelectedTeam() {
-        _uiState.value = _uiState.value.copy(selectedTeam = null)
-    }
-
-    fun clearError() {
-        _uiState.value = _uiState.value.copy(error = null)
-    }
-
-    fun clearSuccessFlags() {
-        _uiState.value = _uiState.value.copy(
-            createSuccess = false,
-            updateSuccess = false,
-            deleteSuccess = false
-        )
-    }
-
-    fun refresh() {
-        loadTeams()
-    }
-
-    fun getImageUrl(imagePath: String): String {
-        return teamService.getImageUrl(imagePath)
-    }
 }

@@ -104,7 +104,7 @@ fun TeamView(
             SearchBar(
                 searchQuery = uiState.searchQuery,
                 onSearchQueryChange = { query ->
-                    teamViewModel.searchTeams(query)
+                    teamViewModel.searchTeam(query)
                 },
                 isSearching = uiState.isSearching
             )
