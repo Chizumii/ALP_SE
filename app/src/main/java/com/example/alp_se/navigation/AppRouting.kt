@@ -25,19 +25,24 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.alp_se.R
+import com.example.alp_se.view.CreateTeamView
 import com.example.alp_se.view.CreateTournament
 import com.example.alp_se.view.HomeView
 import com.example.alp_se.view.NewsScreen
 import com.example.alp_se.view.ProfileScreen
+import com.example.alp_se.view.TeamView
 import com.example.alp_se.view.TournamentDetailView
 import com.example.alp_se.view.TournamentTeamSubmit
 import com.example.alp_se.view.TournamentView
+import com.example.alp_se.viewModels.TeamViewModel
 import com.example.alp_se.viewModels.TournamentViewModel
 
 
 @Composable
 fun AppRouting(
-    tournamentViewModel: TournamentViewModel = viewModel(factory = TournamentViewModel.Factory)
+    tournamentViewModel: TournamentViewModel = viewModel(factory = TournamentViewModel.Factory),
+            teamViewModel: TeamViewModel = viewModel(factory = TeamViewModel.Factory)
+
 ) {
     val token = "aa110648-5d97-4dad-926f-a076f295140f"
     val localContext = LocalContext.current
@@ -48,6 +53,7 @@ fun AppRouting(
         "News",
         "Home",
         "Tournament",
+        "Team",
         "Profile"
     )
     Scaffold(
@@ -105,6 +111,34 @@ fun AppRouting(
             composable(Screen.Profile.route) {
                 ProfileScreen(navController)
             }
+            composable(Screen.Team.route) {
+                TeamView(
+                    navController = navController,
+                    teamViewModel = teamViewModel
+                )
+            }
+
+            composable(Screen.TeamCreate.route) {
+                CreateTeamView(
+                    navController = navController,
+                    teamViewModel = teamViewModel
+                )
+            }
+
+            composable(
+                route = Screen.TeamEdit.route,
+                arguments = listOf(
+                    navArgument("teamId") { type = NavType.IntType }
+                )
+            ) { backStackEntry ->
+                val teamId = backStackEntry.arguments?.getInt("teamId")
+                CreateTeamView(
+                    navController = navController,
+                    teamViewModel = teamViewModel,
+                    teamId = teamId
+                )
+            }
+
 //            composable(Screen.TournamentDetail.route) {
 //                TournamentDetailView(   tournamentViewModel) // Screen to navigate to
 //            }
