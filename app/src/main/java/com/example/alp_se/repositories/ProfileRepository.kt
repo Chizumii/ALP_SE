@@ -8,7 +8,7 @@ import retrofit2.Call
 interface ProfileRepository {
     fun getUserProfile(token: String, id: Int): Call<UserResponse>
 
-    fun createUserProfile(token: String, username: String?, email: String?, password: String?, namaDepan: String?, namaBelakang: String?, nomorTelp: String?, nicknameGame: String?, teamID: Int?): Call<UserResponse>
+    fun createUserProfile(username: String?, email: String?, password: String?, namaDepan: String?, namaBelakang: String?, nomorTelp: String?, nicknameGame: String?, teamID: Int?): Call<UserResponse>
 
     fun updateUserProfile(token: String, id: Int, username: String?, email: String?, password: String?, namaDepan: String?, namaBelakang: String?, nomorTelp: String?, nicknameGame: String?, teamID: Int?): Call<UserResponse>
 
@@ -24,7 +24,6 @@ class NetworkProfileRepository(
     }
 
     override fun createUserProfile(
-        token: String,
         username: String?,
         email: String?,
         password: String?,
@@ -35,7 +34,6 @@ class NetworkProfileRepository(
         teamID: Int?
     ): Call<UserResponse> {
         return profileService.createUserProfile(
-            token,
             UserResponse(
                 username = username ?: "",
                 email = email ?: "",
