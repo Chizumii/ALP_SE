@@ -3,10 +3,13 @@ package com.example.alp_se.viewModels
 import android.content.Context
 import android.net.Uri
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import com.example.alp_se.models.Team
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
+import com.example.alp_se.EshypeApplication
+import com.example.alp_se.models.*
 import com.example.alp_se.services.TeamService
-import com.example.alp_se.uiStates.TeamUIState
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -15,7 +18,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 class TeamViewModel(
-    private val teamService: TeamService = TeamService()
+    private val teamService: TeamService
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(TeamUIState())
@@ -200,5 +203,15 @@ class TeamViewModel(
 
     fun getImageUrl(imagePath: String): String {
         return teamService.getImageUrl(imagePath)
+    }
+
+    companion object {
+        val Factory: ViewModelProvider.Factory = viewModelFactory {
+            initializer {
+                val application = (this[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY] as EshypeApplication)
+                val teamService = TeamService(application.container.teamRepository)
+                TeamViewModel(teamService = teamService)
+            }
+        }
     }
 }

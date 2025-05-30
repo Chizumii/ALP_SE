@@ -20,6 +20,7 @@ interface ProfileService {
 
     @POST("users")
     fun createUserProfile(
+        @Header("X-API-TOKEN") token: String,
         @Body userModel: UserResponse
     ): Call<UserResponse>
 

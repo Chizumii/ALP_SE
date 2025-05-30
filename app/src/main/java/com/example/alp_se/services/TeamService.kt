@@ -1,17 +1,21 @@
 package com.example.alp_se.services
 
+import com.example.alp_se.models.*
+import okhttp3.MultipartBody
+import okhttp3.RequestBody
+import retrofit2.Response
+import retrofit2.http.*
 import android.content.Context
 import android.net.Uri
-import com.example.alp_se.models.Team
+import com.example.alp_se.models.*
 import com.example.alp_se.repositories.TeamRepository
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
-import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.asRequestBody
+import okhttp3.RequestBody.Companion.toRequestBody
 import java.io.File
 import java.io.FileOutputStream
 import java.io.InputStream
 
-<<<<<<< HEAD
 
 interface TeamApiService {
     @Multipart
@@ -43,39 +47,78 @@ class TeamService(
     companion object {
         private const val BASE_URL = "http://192.168.105.69:3000/"
     }
-=======
-class TeamService(private val repository: TeamRepository = TeamRepository()) {
->>>>>>> parent of 9bcc9b4 (Complete TeamView)
 
     suspend fun createTeam(namatim: String, imageUri: Uri, context: Context): Result<Team> {
         return try {
+            val namatimBody = namatim.toRequestBody("text/plain".toMediaTypeOrNull())
             val imagePart = createImagePart(imageUri, context)
-            repository.createTeam(namatim, imagePart)
+
+            val response = teamRepository.createTeam(namatimBody, imagePart)
+            if (response.isSuccessful) {
+                response.body()?.let { teamResponse ->
+                    Result.success(teamResponse.data)
+                } ?: Result.failure(Exception("Empty response body"))
+            } else {
+                val errorMessage = parseErrorResponse(response)
+                Result.failure(Exception("HTTP ${response.code()}: $errorMessage"))
+            }
         } catch (e: Exception) {
             Result.failure(e)
         }
     }
 
     suspend fun getAllTeams(): Result<List<Team>> {
-        return repository.getAllTeams()
+        return try {
+            val response = teamRepository.getAllTeams()
+            if (response.isSuccessful) {
+                response.body()?.let { teamsResponse ->
+                    Result.success(teamsResponse.data)
+                } ?: Result.failure(Exception("Empty response body"))
+            } else {
+                val errorMessage = parseErrorResponse(response)
+                Result.failure(Exception("HTTP ${response.code()}: $errorMessage"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
     }
 
     suspend fun updateTeam(id: Int, namatim: String, imageUri: Uri, context: Context): Result<Team> {
         return try {
+            val namatimBody = namatim.toRequestBody("text/plain".toMediaTypeOrNull())
             val imagePart = createImagePart(imageUri, context)
-            repository.updateTeam(id, namatim, imagePart)
+
+            val response = teamRepository.updateTeam(id, namatimBody, imagePart)
+            if (response.isSuccessful) {
+                response.body()?.let { teamResponse ->
+                    Result.success(teamResponse.data)
+                } ?: Result.failure(Exception("Empty response body"))
+            } else {
+                val errorMessage = parseErrorResponse(response)
+                Result.failure(Exception("HTTP ${response.code()}: $errorMessage"))
+            }
         } catch (e: Exception) {
             Result.failure(e)
         }
     }
 
     suspend fun deleteTeam(id: Int): Result<Boolean> {
-        return repository.deleteTeam(id)
+        return try {
+            val response = teamRepository.deleteTeam(id)
+            if (response.isSuccessful) {
+                Result.success(true)
+            } else {
+                val errorMessage = parseErrorResponse(response)
+                Result.failure(Exception("HTTP ${response.code()}: $errorMessage"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
     }
 
     suspend fun searchTeams(query: String): Result<List<Team>> {
         return try {
-            val allTeamsResult = repository.getAllTeams()
+            val allTeamsResult = getAllTeams()
             allTeamsResult.fold(
                 onSuccess = { teams ->
                     val filteredTeams = teams.filter { team ->
@@ -97,8 +140,16 @@ class TeamService(private val repository: TeamRepository = TeamRepository()) {
         val inputStream: InputStream = contentResolver.openInputStream(imageUri)
             ?: throw Exception("Unable to open image stream")
 
-        // Create a temporary file
-        val tempFile = File.createTempFile("upload_image", ".jpg", context.cacheDir)
+        // Create a temporary file with proper extension
+        val mimeType = contentResolver.getType(imageUri)
+        val extension = when (mimeType) {
+            "image/jpeg" -> ".jpg"
+            "image/png" -> ".png"
+            "image/gif" -> ".gif"
+            else -> ".jpg"
+        }
+
+        val tempFile = File.createTempFile("upload_image", extension, context.cacheDir)
         val outputStream = FileOutputStream(tempFile)
 
         inputStream.use { input ->
@@ -107,17 +158,30 @@ class TeamService(private val repository: TeamRepository = TeamRepository()) {
             }
         }
 
-        // Fixed: Use asRequestBody() extension function instead of RequestBody.create()
-        val requestFile = tempFile.asRequestBody("image/*".toMediaTypeOrNull())
-
+        val requestFile = tempFile.asRequestBody(mimeType?.toMediaTypeOrNull())
         return MultipartBody.Part.createFormData("image", tempFile.name, requestFile)
     }
 
-    fun getImageUrl(imagePath: String, baseUrl: String = "http://your-api-base-url/"): String {
-        return if (imagePath.startsWith("http")) {
-            imagePath
-        } else {
-            "${baseUrl}${imagePath}"
+    private fun parseErrorResponse(response: retrofit2.Response<*>): String {
+        return try {
+            val errorBody = response.errorBody()?.string()
+            if (errorBody != null) {
+                val gson = com.google.gson.Gson()
+                val errorResponse = gson.fromJson(errorBody, ErrorResponse::class.java)
+                errorResponse.message
+            } else {
+                response.message()
+            }
+        } catch (e: Exception) {
+            response.message()
+        }
+    }
+
+    fun getImageUrl(imagePath: String): String {
+        return when {
+            imagePath.startsWith("http://") || imagePath.startsWith("https://") -> imagePath
+            imagePath.startsWith("/") -> "$BASE_URL${imagePath.substring(1)}"
+            else -> "$BASE_URL$imagePath"
         }
     }
 
