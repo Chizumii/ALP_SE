@@ -1,28 +1,34 @@
 package com.example.alp_se.models
 
+import com.google.gson.annotations.SerializedName
+
 data class Team(
+    @SerializedName("TeamId")
     val teamId: Int,
+
+    @SerializedName("namatim")
     val namatim: String,
+
+    @SerializedName("image")
     val image: String
 )
 
 data class TeamResponse(
-    val success: Boolean,
     val message: String,
     val data: Team
 )
 
 data class TeamsResponse(
-    val success: Boolean,
     val message: String,
     val data: List<Team>
 )
 
-data class ErrorResponse(
-    val success: Boolean = false,
-    val message: String
+data class CreateTeamRequest(
+    val namatim: String
+    // Note: image will be handled as multipart in the repository
 )
 
+<<<<<<< HEAD
 data class TeamUIState(
     val teams: List<Team> = emptyList(),
     val filteredTeams: List<Team> = emptyList(),
@@ -58,3 +64,9 @@ data class TeamUIState(
     val hasFilteredResults: Boolean
         get() = filteredTeams.isNotEmpty()
 }
+=======
+data class UpdateTeamRequest(
+    val namatim: String
+    // Note: image will be handled as multipart in the repository
+)
+>>>>>>> parent of 9bcc9b4 (Complete TeamView)

@@ -1,4 +1,3 @@
-//NavigationBarCard.kt
 package com.example.alp_se.navigation
 
 import androidx.compose.material3.Icon
@@ -16,27 +15,19 @@ import androidx.compose.ui.res.painterResource
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.alp_se.R
 import com.example.alp_se.view.HomeView
-//import com.example.alp_se.view.ProfileScreen
+import com.example.alp_se.view.ProfileScreen
 import com.example.alp_se.view.TournamentView
-import com.example.alp_se.view.TeamView
-import com.example.alp_se.view.CreateTeamView
+import com.example.alp_se.view.TeamScreen
+import com.example.alp_se.view.CreateTeamScreen
 import com.example.alp_se.viewModels.TournamentViewModel
 import com.example.alp_se.viewModels.TeamViewModel
 
 @Composable
 fun BottomNavigationBar(navController: NavHostController) {
     val items = listOf("Home", "News", "Tournament", "Team", "Profile")
-    val routes = listOf(
-        Screen.Home.route,
-        "News", // Keep as string until NewsScreen is implemented
-        Screen.Tournament.route,
-        Screen.Team.route,
-        Screen.Profile.route
-    )
     val icons = listOf(
         R.drawable.baseline_home_filled_24,
         R.drawable.baseline_search_24,
@@ -47,18 +38,14 @@ fun BottomNavigationBar(navController: NavHostController) {
     val activeColor = Color(0xFFFFC107) // Yellow color for active item
     val inactiveColor = Color(0xFF6B90B6) // Grey color for inactive item
 
-    // Get current route to determine selected item
-    val navBackStackEntry by navController.currentBackStackEntryAsState()
-    val currentRoute = navBackStackEntry?.destination?.route
-    val selectedItem = routes.indexOfFirst { it == currentRoute }.takeIf { it >= 0 } ?: 0
-
+    var selectedItem by remember { mutableStateOf(0) }
     NavigationBar(containerColor = Color(0xFF222222)) {
         items.forEachIndexed { index, item ->
             NavigationBarItem(
                 selected = selectedItem == index,
                 onClick = {
-                    val targetRoute = routes[index]
-                    navController.navigate(targetRoute) {
+                    selectedItem = index
+                    navController.navigate(item) {
                         // Pop up to the start destination to avoid building up a large stack
                         popUpTo(navController.graph.startDestinationId) {
                             saveState = true
@@ -91,8 +78,7 @@ fun BottomNavigationBar(navController: NavHostController) {
 fun NavigationGraph(
     navController: NavHostController,
     modifier: Modifier = Modifier,
-    tournamentViewModel: TournamentViewModel,
-    teamViewModel: TeamViewModel = viewModel()
+    tournamentViewModel: TournamentViewModel
 ) {
     NavHost(
         navController = navController,
@@ -116,14 +102,24 @@ fun NavigationGraph(
         }
 
         composable("Team") {
-            TeamView(
-                navController = navController,
+            val teamViewModel: TeamViewModel = viewModel()
+            TeamScreen(
                 teamViewModel = teamViewModel
             )
         }
 
-//        composable("Profile") {
-//            ProfileScreen(navController = navController)
-//        }
+        composable("CreateTeam") {
+            val teamViewModel: TeamViewModel = viewModel()
+            CreateTeamScreen(
+                teamViewModel = teamViewModel,
+                onNavigateBack = {
+                    navController.popBackStack()
+                }
+            )
+        }
+
+        composable("Profile") {
+            ProfileScreen(navController = navController)
+        }
     }
 }
