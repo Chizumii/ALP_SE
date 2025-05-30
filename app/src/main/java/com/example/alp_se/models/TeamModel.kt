@@ -29,7 +29,7 @@ data class TeamUIState(
     val searchQuery: String = "",
     val selectedTeam: Team? = null,
     val isLoading: Boolean = false,
-    val isSearching: Boolean = false,
+    val isSearching: Boolean = false, // Crucial for search UX
     val isCreating: Boolean = false,
     val isUpdating: Boolean = false,
     val isDeleting: Boolean = false,
@@ -44,9 +44,17 @@ data class TeamUIState(
     val displayTeams: List<Team>
         get() = if (searchQuery.isBlank()) teams else filteredTeams
 
+    // Using the more comprehensive logic from the original models.TeamUIState
     val showEmptyState: Boolean
-        get() = teams.isEmpty() && !isLoading && error == null
+        get() = teams.isEmpty() && !isLoading && !isSearching && error == null // Consider !isSearching too
 
     val showNoSearchResults: Boolean
-        get() = searchQuery.isNotBlank() && filteredTeams.isEmpty() && !isSearching && error == null
+        get() = searchQuery.isNotBlank() && filteredTeams.isEmpty() && !isLoading && !isSearching && error == null
+
+    // Optional additions from the uiStates version if you find them cleaner
+    val hasTeams: Boolean
+        get() = teams.isNotEmpty()
+
+    val hasFilteredResults: Boolean
+        get() = filteredTeams.isNotEmpty()
 }

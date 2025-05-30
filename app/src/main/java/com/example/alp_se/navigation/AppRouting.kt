@@ -28,7 +28,7 @@ import com.example.alp_se.viewModels.TournamentViewModel
 @Composable
 fun AppRouting(
     tournamentViewModel: TournamentViewModel = viewModel(factory = TournamentViewModel.Factory),
-    teamViewModel: TeamViewModel = viewModel()
+    teamViewModel: TeamViewModel = viewModel(factory = TeamViewModel.Factory)
 ) {
     val navController = rememberNavController()
     val currentBackStackEntry by navController.currentBackStackEntryAsState()
