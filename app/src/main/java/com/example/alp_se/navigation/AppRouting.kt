@@ -39,7 +39,7 @@ import com.example.alp_se.viewModels.TournamentViewModel
 fun AppRouting(
     tournamentViewModel: TournamentViewModel = viewModel(factory = TournamentViewModel.Factory)
 ) {
-    val token = ""
+    val token = "aa110648-5d97-4dad-926f-a076f295140f"
     val localContext = LocalContext.current
     val navController = rememberNavController()
     val currentBackStackEntry by navController.currentBackStackEntryAsState()
@@ -68,20 +68,20 @@ fun AppRouting(
             }
 
             composable("Tournament") {
-                TournamentView(navController, tournamentViewModel) // Screen to navigate to
+                TournamentView(navController, tournamentViewModel, token) // Screen to navigate to
             }
             composable("tournamentCreate") {
                 CreateTournament(navController, tournamentViewModel, localContext, token) // Screen to navigate to
             }
             composable(
-                "tournament_detail/{TournamentID}"
+                "tournamentDetail/{TournamentID}"
             ) { backStackEntry ->
-                val TournamentID = backStackEntry.arguments?.getInt("TournamentID")
+                val TournamentID = backStackEntry.arguments?.getString("TournamentID")
                 val tournament =
-                    tournamentViewModel.tounament.collectAsState().value.find { it.TournamentID == TournamentID }
+                    tournamentViewModel.tounament.collectAsState().value.find { it.TournamentID == Integer.parseInt(TournamentID) }
 
                 tournament?.let {
-                    TournamentDetailView(tournament = it, navController= navController)
+                    TournamentDetailView(tournament = it, navController= navController, tournamentViewModel)
                 }
             }
             composable(

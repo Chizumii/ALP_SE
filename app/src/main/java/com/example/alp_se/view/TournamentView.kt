@@ -29,21 +29,21 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.alp_se.R
-import com.example.alp_se.view.templates.TorunamentCard
+import com.example.alp_se.view.templates.TournamentCard
 import com.example.alp_se.viewModels.TournamentViewModel
 
 @Composable
 fun TournamentView(
     navController: NavController,
-    tournamentViewModel: TournamentViewModel
+    tournamentViewModel: TournamentViewModel,
+    token: String
 ) {
 
     val tournament by tournamentViewModel.tounament.collectAsState()
 
     LaunchedEffect(Unit) {
         tournamentViewModel.fetchTournaments(
-//            token = tournamentViewModel.
-            lokasi = tournamentViewModel.lokasiInput
+            token
         )
     }
 
@@ -123,7 +123,7 @@ fun TournamentView(
                 ) // Beri ruang untuk navbar atas dan bawah
         ) {
             items(tournament) { tournament ->
-                TorunamentCard(
+                TournamentCard(
                     tournament,
                     tournamentViewModel = tournamentViewModel,
                             navController = navController

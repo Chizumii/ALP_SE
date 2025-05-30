@@ -61,6 +61,7 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
+import com.example.alp_se.models.TournamentModel
 
 
 @Composable
@@ -68,20 +69,14 @@ fun CreateTournament(
     navController: NavController,
     tournamentViewModel: TournamentViewModel,
     context: Context,
-    token: String
+    token: String,
 ) {
-    var imageInput by remember { mutableStateOf(tournamentViewModel.imageInput) }
-    var nameInput by remember { mutableStateOf(tournamentViewModel.nameTournamentInput) }
-    var descriptionInput by remember { mutableStateOf(tournamentViewModel.descriptionInput) }
-    var costInput by remember { mutableStateOf(tournamentViewModel.costInput) }
-    var typeInput by remember { mutableStateOf(tournamentViewModel.typeInput) }
-
     val launcher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent(),
         onResult = { uri: Uri? ->
             uri?.let { newValue ->
-                imageInput = newValue.toString()
-                tournamentViewModel.updateImageInput(imageInput)
+                tournamentViewModel.imageInput = newValue.toString()
+                tournamentViewModel.updateImageInput(tournamentViewModel.imageInput)
             }
         }
     )
@@ -120,7 +115,7 @@ fun CreateTournament(
                         .padding(end = 16.dp)
                 )
                 Text(
-                    text = "Create Tournament",
+                    text = if (tournamentViewModel.currentTournament == null) "Create Tournament" else "Update Tournament", // ⭐ Dynamic text ⭐
                     fontSize = 24.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color.White
@@ -159,15 +154,23 @@ fun CreateTournament(
                         .padding(2.dp),
                     contentAlignment = Alignment.Center
                 ) {
-                    if (imageInput != "") {
+                    val imageUrl = tournamentViewModel.imageInput
+                    if (imageUrl.isNotEmpty()) {
+                        val modelToLoad = if (imageUrl.startsWith("content://")) {
+                            Uri.parse(imageUrl)
+                        } else {
+                            "http://10.0.2.2:3000$imageUrl"
+                        }
+
                         Image(
-                            painter = rememberAsyncImagePainter(tournamentViewModel.imageInput),
+                            painter = rememberAsyncImagePainter(model = modelToLoad), // ⭐ Use the determined modelToLoad ⭐
                             contentDescription = "Tournament Image",
                             modifier = Modifier
                                 .fillMaxSize()
                                 .clip(RoundedCornerShape(16.dp))
                         )
                     } else {
+                        // Placeholder when no image is selected
                         Column(
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
@@ -188,7 +191,7 @@ fun CreateTournament(
                 }
 
                 Button(
-                    onClick = { launcher.launch("image/*") },
+                    onClick = { launcher.launch("image/*") }, // Launches image picker
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4A90E2)),
                     modifier = Modifier
                         .padding(vertical = 16.dp)
@@ -213,7 +216,7 @@ fun CreateTournament(
                     CustomTextField(
                         value = tournamentViewModel.nameTournamentInput,
                         onValueChange = {
-                            nameInput = it
+                            tournamentViewModel.nameTournamentInput = it
                             tournamentViewModel.updateNameTournamentInput(it)
                         },
                         label = "Tournament Name"
@@ -224,7 +227,7 @@ fun CreateTournament(
                     CustomTextField(
                         value = tournamentViewModel.descriptionInput,
                         onValueChange = {
-                            descriptionInput = it
+                            tournamentViewModel.descriptionInput = it
                             tournamentViewModel.updateDescriptionInput(it)
                         },
                         label = "Description",
@@ -234,13 +237,25 @@ fun CreateTournament(
                     Spacer(modifier = Modifier.height(16.dp))
 
                     DoubleTextField(
-                        value = costInput,
-                        onValueChange = { newDouble ->
-                            costInput = newDouble
+                        value = tournamentViewModel.costInput,
+                        onValueChange = { newInt ->
+                            tournamentViewModel.costInput = newInt
                         },
                         label = "Entry Cost"
                     )
 
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    CustomTextField(
+                        value = tournamentViewModel.lokasiInput,
+                        onValueChange = {
+                            tournamentViewModel.lokasiInput = it
+                            tournamentViewModel.updateLokasiInput(it)
+                        },
+                        label = "Location",
+                        maxLines = 3
+                    )
 
                     Spacer(modifier = Modifier.height(16.dp))
 
@@ -256,17 +271,26 @@ fun CreateTournament(
                 Spacer(modifier = Modifier.height(24.dp))
                 Button(
                     onClick = {
-                        tournamentViewModel.createTournament(
-                            navController = navController,
-                           nameTournamentInput =  nameInput,
-                           descriptionInput=  descriptionInput,
-                           costInput =  costInput,
-                           imageInput =  imageInput,
-                           typeInput =  typeInput,
-                           lokasi =  tournamentViewModel.lokasiInput,
-                           token =  token
-                        )
-                        navController.navigate("Tournament")
+                        if (tournamentViewModel.currentTournament != null) {
+                            tournamentViewModel.updateTournament(
+                                navController = navController,
+                                tournamentId = tournamentViewModel.currentTournament!!.TournamentID,
+                                nameTournamentInput = tournamentViewModel.nameTournamentInput,
+                                descriptionInput = tournamentViewModel.descriptionInput,
+                                costInput = tournamentViewModel.costInput,
+                                imageInput = tournamentViewModel.imageInput,
+                                typeInput = tournamentViewModel.typeInput,
+                                lokasi = tournamentViewModel.lokasiInput,
+                                token = token,
+                                context = context
+                            )
+                        } else {
+                            tournamentViewModel.createTournament(
+                                navController = navController,
+                                token = token,
+                                context = context
+                            )
+                        }
                     },
                     modifier = Modifier
                         .fillMaxWidth()
@@ -321,14 +345,14 @@ private fun CustomTextField(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DoubleTextField(
-    value: Double,
-    onValueChange: (Double) -> Unit,
+    value: Int,
+    onValueChange: (Int) -> Unit,
     label: String,
     maxLines: Int = 1
 ) {
     // keep the textual representation in sync with `value`
     var text by remember(value) {
-        mutableStateOf(if (value == 0.0) "" else value.toString())
+        mutableStateOf(if (value == 0) "" else value.toString())
     }
     val focusManager = LocalFocusManager.current
 
@@ -346,7 +370,7 @@ fun DoubleTextField(
                 if (newText.matches(Regex("^\\d*\\.?\\d*\$"))) {
                     text = newText
                     // update the Double if parsable
-                    newText.toDoubleOrNull()?.let { onValueChange(it) }
+                    newText.toIntOrNull()?.let { onValueChange(it) }
                 }
             },
             singleLine = true,

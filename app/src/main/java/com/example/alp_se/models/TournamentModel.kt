@@ -3,6 +3,7 @@ package com.example.alp_se.models
 // TournamentModel.kt
 // Data class untuk membuat tournament baru
 data class TournamentModel(
+    val id: Int,
     val nama_tournament: String,
     val description: String,
     val image: String,
@@ -15,7 +16,7 @@ data class CreateTournament(
     val description: String,
     val image: String,
     val tipe: String,
-    val biaya: Double,
+    val biaya: Int,
     val lokasi: String
 )
 
@@ -31,8 +32,8 @@ data class TournamentResponse(
     val description: String = "",
     val image: String = "",
     val tipe: String = "",
-    val biaya: Double = 0.0,
-    val lokasi: String
+    val biaya: Int = 0,
+    val lokasi: String = ""
 )
 
 // Data class untuk permintaan tournament (misalnya, saat mengambil detail tertentu)

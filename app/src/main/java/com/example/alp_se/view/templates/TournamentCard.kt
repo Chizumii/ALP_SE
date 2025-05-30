@@ -1,6 +1,7 @@
 // TorunamentCard.kt
 package com.example.alp_se.view.templates
 
+import android.provider.SyncStateContract
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -23,22 +24,25 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import coil.compose.AsyncImage
+import coil.compose.rememberAsyncImagePainter
 import com.example.alp_se.R
 import com.example.alp_se.models.TournamentResponse
 import com.example.alp_se.navigation.Screen
 import com.example.alp_se.viewModels.TournamentViewModel
 
 @Composable
-fun TorunamentCard(
+fun TournamentCard(
     tournament: TournamentResponse,
     tournamentViewModel: TournamentViewModel,
     navController: NavController
 ) {
+    val fullImageUrl = "http://10.0.2.2:3000/images${tournament.image.substringAfter("/uploads")}"
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .padding(16.dp)
-            .clickable { navController.navigate("tournamentDetail")} // Handle click
+            .clickable { navController.navigate("tournamentDetail/${tournament.TournamentID}")} // Handle click
     ) {
         Column(
             modifier = Modifier
@@ -66,10 +70,12 @@ fun TorunamentCard(
 //                    }
 //                )
                 Image(
-                    painter = painterResource( R.drawable.pppppppp),
-                    contentDescription = "Tournament Image",
-                    contentScale = ContentScale.FillWidth,
-                    modifier = Modifier.fillMaxSize()
+                    painter = rememberAsyncImagePainter(model = fullImageUrl),
+                    contentDescription = "Tournament Banner",
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(200.dp), // Set a fixed height or aspect ratio
+                    contentScale = ContentScale.Crop // Crop to fill bounds
                 )
             }
 

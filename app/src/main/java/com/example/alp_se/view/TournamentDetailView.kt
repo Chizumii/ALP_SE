@@ -29,18 +29,22 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.zIndex
 import androidx.navigation.NavController
+import coil.compose.AsyncImage
 import com.example.alp_se.R
 import com.example.alp_se.models.TournamentResponse
 import com.example.alp_se.navigation.Screen
+import coil.compose.rememberAsyncImagePainter
+import com.example.alp_se.viewModels.TournamentViewModel
 
 @Composable
 fun TournamentDetailView(
     tournament: TournamentResponse,
-    navController: NavController
-//    tournamentViewModel: TournamentViewModel // Click handler for "Register"
+    navController: NavController,
+    tournamentViewModel: TournamentViewModel // Click handler for "Register"
 ) {
-
+    val fullImageUrl = "http://10.0.2.2:3000/images${tournament.image.substringAfter("/uploads")}"
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -52,6 +56,7 @@ fun TournamentDetailView(
                 .fillMaxWidth()
                 .align(Alignment.TopCenter)
                 .background(Color(0XFF222222))
+                .zIndex(1f)
         ) {
             Box(
                 modifier = Modifier
@@ -72,6 +77,21 @@ fun TournamentDetailView(
                         modifier = Modifier.size(80.dp)
                     )
                     Spacer(modifier = Modifier.weight(1f)) // Spacer to push content to the center
+                    Box(
+                        modifier = Modifier
+                            .size(80.dp)
+                            .clickable {
+                                tournamentViewModel.openUpdate(navController, tournament)
+                            }
+                            ,
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Image(
+                            painter = painterResource(R.drawable.baseline_add_circle_outline_24),
+                            contentDescription = "Logo Button",
+
+                        )
+                    }
                 }
 
                 Text(
@@ -120,10 +140,12 @@ fun TournamentDetailView(
 //                }
 //            )
             Image(
-                painter = painterResource( R.drawable.pppppppp),
-                contentDescription = "Tournament Image",
-                contentScale = ContentScale.FillWidth,
-                modifier = Modifier.fillMaxSize()
+                painter = rememberAsyncImagePainter(model = fullImageUrl),
+                contentDescription = "Tournament Banner",
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(200.dp), // Set a fixed height or aspect ratio
+                contentScale = ContentScale.Crop // Crop to fill bounds
             )
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -192,7 +214,7 @@ fun TournamentDetailView(
                         fontWeight = FontWeight.Bold
                     )
                     Text(
-                        text = tournament.image,
+                        text = tournament.tipe,
                         fontSize = 14.sp,
                         color = Color.White
                     )

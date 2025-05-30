@@ -56,7 +56,7 @@ fun LoginScreen() {
                 Spacer(modifier = Modifier.weight(1f))
             }
             Text(
-                text = "Create Tournament",
+                text = "Login",
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color.White,
