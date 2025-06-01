@@ -32,7 +32,7 @@ data class NewsItem(
 fun NewsScreen(navController: NavController, modifier: Modifier = Modifier) {
     val newsList = List(10) { index ->
         NewsItem(
-            imageRes = R.drawable.shortnsweet,
+            imageRes = R.drawable.baseline_person_24,
             title = "M6 Bracket MLBB $index",
             description = "Preview Detail for item $index"
         )
@@ -129,7 +129,7 @@ fun NewsScreenPreview() {
     // Generate a list of NewsItem dynamically
     val previewNewsList = List(10) { index ->
         NewsItem(
-            imageRes = R.drawable.shortnsweet,
+            imageRes = R.drawable.baseline_groups_24,
             title = "M6 Bracket MLBB $index",
             description = "Preview Detail for item $index"
         )

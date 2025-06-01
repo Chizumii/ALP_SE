@@ -3,7 +3,7 @@ package com.example.alp_se.repositories
 import android.content.Context
 import android.net.Uri
 import com.example.alp_se.models.GeneralResponseModel
-import com.example.alp_se.models.TournamentRequest
+import com.example.alp_se.models.RegistrationStatusResponse
 import com.example.alp_se.models.TournamentResponse
 import com.example.alp_se.models.listTournament
 import com.example.alp_se.services.TournamentServiceApi
@@ -18,10 +18,10 @@ import java.io.File
 
 interface TournamentRepository {
     fun createTournament(
-        context: Context, // Add context to access content resolver for Uri
+        context: Context,
         nama_tournament: String,
         description: String,
-        imageUri: Uri?, // Change to Uri?
+        imageUri: Uri?,
         tipe: String,
         biaya: Int,
         lokasi: String,
@@ -30,10 +30,10 @@ interface TournamentRepository {
 
     fun updateTournament(
         context: Context,
-        tournamentId: Int, // New: Pass the ID of the tournament to update
+        tournamentId: Int,
         nama_tournament: String,
         description: String,
-        imageUri: Uri?, // Changed to Uri? for multipart update
+        imageUri: Uri?,
         tipe: String,
         biaya: Int,
         lokasi: String,
@@ -45,9 +45,31 @@ interface TournamentRepository {
         token: String
     ): Call<GeneralResponseModel>
 
-   suspend fun getALLTournament(
+    suspend fun getALLTournament(
         token: String,
     ): Response<listTournament>
+
+    suspend fun checkRegistrationStatus(
+        tournamentId: Int,
+        token: String
+    ): Response<RegistrationStatusResponse>
+
+    suspend fun registerTeam(
+        tournamentId: Int,
+        token: String
+    ): Response<GeneralResponseModel>
+
+    // ADD THIS NEW METHOD to the interface
+    suspend fun registerTeamWithId(
+        tournamentId: Int,
+        teamId: Int,
+        token: String
+    ): Response<GeneralResponseModel>
+
+    suspend fun unregisterTeam(
+        tournamentId: Int,
+        token: String
+    ): Response<GeneralResponseModel>
 }
 
 
@@ -64,10 +86,10 @@ class NetworkTournamentRepository(
     }
 
     override fun createTournament(
-        context: Context, // Added context
+        context: Context,
         nama_tournament: String,
         description: String,
-        imageUri: Uri?, // Changed to Uri?
+        imageUri: Uri?,
         tipe: String,
         biaya: Int,
         lokasi: String,
@@ -82,7 +104,6 @@ class NetworkTournamentRepository(
 
         var imageFilePart: MultipartBody.Part? = null
         imageUri?.let { uri ->
-            // Get the file path from the Uri
             val filePath = getPathFromUri(context, uri)
             if (filePath != null) {
                 val file = File(filePath)
@@ -91,14 +112,9 @@ class NetworkTournamentRepository(
             }
         }
 
-        // Ensure imageFilePart is not null. If it can be null, your API needs to handle it.
-        // For now, I'm assuming image is always sent.
         if (imageFilePart == null) {
-            // Handle case where image URI is null or file path couldn't be resolved
-            // You might throw an error or return a failed call
             throw IllegalArgumentException("Image file could not be prepared for upload.")
         }
-
 
         return tournamentServiceApi.createTournament(
             token = token,
@@ -113,7 +129,7 @@ class NetworkTournamentRepository(
 
     override fun updateTournament(
         context: Context,
-        tournamentId: Int, // Pass the ID
+        tournamentId: Int,
         nama_tournament: String,
         description: String,
         imageUri: Uri?,
@@ -121,19 +137,15 @@ class NetworkTournamentRepository(
         biaya: Int,
         lokasi: String,
         token: String
-    ): Call<GeneralResponseModel> { // Changed to GeneralResponseModel
+    ): Call<GeneralResponseModel> {
         val namaTournamentPart = nama_tournament.toRequestBody("text/plain".toMediaTypeOrNull())
         val descriptionPart = description.toRequestBody("text/plain".toMediaTypeOrNull())
         val tipePart = tipe.toRequestBody("text/plain".toMediaTypeOrNull())
         val biayaPart = biaya.toString().toRequestBody("text/plain".toMediaTypeOrNull())
         val lokasiPart = lokasi.toRequestBody("text/plain".toMediaTypeOrNull())
 
-        // Handle image update: only send if a new image Uri is provided
-        // Otherwise, your backend update API should handle keeping the old image
-        // or a separate API for image update. For now, assuming imageUri means new image.
         var imageFilePart: MultipartBody.Part? = null
         imageUri?.let { uri ->
-            // Get the file path from the Uri
             val filePath = getPathFromUri(context, uri)
             if (filePath != null) {
                 val file = File(filePath)
@@ -142,13 +154,12 @@ class NetworkTournamentRepository(
             }
         }
 
-
         return tournamentServiceApi.updateTournament(
             token = token,
-            id = tournamentId.toString(), // Convert Int ID to String for @Path
+            id = tournamentId.toString(),
             nama_tournament = namaTournamentPart,
             description = descriptionPart,
-            image = imageFilePart, // This will be null if no new image, backend must handle
+            image = imageFilePart,
             tipe = tipePart,
             biaya = biayaPart,
             lokasi = lokasiPart
@@ -163,6 +174,36 @@ class NetworkTournamentRepository(
             token = token,
             id = id.toString()
         )
+    }
+
+    override suspend fun checkRegistrationStatus(
+        tournamentId: Int,
+        token: String
+    ): Response<RegistrationStatusResponse> {
+        return tournamentServiceApi.checkRegistrationStatus(token, tournamentId)
+    }
+
+    override suspend fun registerTeam(
+        tournamentId: Int,
+        token: String
+    ): Response<GeneralResponseModel> {
+        return tournamentServiceApi.registerTeam(token, tournamentId)
+    }
+
+    // IMPLEMENT THE NEW METHOD
+    override suspend fun registerTeamWithId(
+        tournamentId: Int,
+        teamId: Int,
+        token: String
+    ): Response<GeneralResponseModel> {
+        return tournamentServiceApi.registerTeamWithId(token, tournamentId, teamId)
+    }
+
+    override suspend fun unregisterTeam(
+        tournamentId: Int,
+        token: String
+    ): Response<GeneralResponseModel> {
+        return tournamentServiceApi.unregisterTeam(token, tournamentId)
     }
 }
 
@@ -184,4 +225,3 @@ private fun getPathFromUri(context: Context, uri: Uri): String? {
     }
     return filePath
 }
-

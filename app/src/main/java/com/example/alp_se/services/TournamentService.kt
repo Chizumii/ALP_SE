@@ -1,7 +1,7 @@
 package com.example.alp_se.services
 
 import com.example.alp_se.models.GeneralResponseModel
-import com.example.alp_se.models.TournamentRequest
+import com.example.alp_se.models.RegistrationStatusResponse
 import com.example.alp_se.models.TournamentResponse
 import com.example.alp_se.models.listTournament
 import okhttp3.MultipartBody
@@ -21,39 +21,37 @@ import retrofit2.http.Query
 
 interface TournamentServiceApi {
 
-
-    @Multipart // Add this annotation for multipart requests
+    @Multipart
     @POST("/api/tournament")
     fun createTournament(
         @Header("X-API-TOKEN") token: String,
         @Part("nama_tournament") nama_tournament: RequestBody,
         @Part("description") description: RequestBody,
-        @Part image: MultipartBody.Part, // Change to MultipartBody.Part for image file
+        @Part image: MultipartBody.Part,
         @Part("tipe") tipe: RequestBody,
         @Part("biaya") biaya: RequestBody,
         @Part("lokasi") lokasi: RequestBody
     ): Call<GeneralResponseModel>
-
 
     @GET("/api/tournament")
     suspend fun getAllTournament(
         @Header("X-API-TOKEN") token: String
     ): Response<listTournament>
 
-
     @GET("/api/tournament/{id}")
     fun getTournamentById(
-        @Header("X-API-TOKEN") token: String, @Path("id") id: Int
+        @Header("X-API-TOKEN") token: String,
+        @Path("id") id: Int
     ): Call<TournamentResponse>
 
-    @Multipart // Mark as multipart
+    @Multipart
     @PUT("/api/tournament/{id}")
     fun updateTournament(
         @Header("X-API-TOKEN") token: String,
-        @Path("id") id: String, // ID for the path
+        @Path("id") id: String,
         @Part("nama_tournament") nama_tournament: RequestBody,
         @Part("description") description: RequestBody,
-        @Part image: MultipartBody.Part?, // Make it nullable as image might not be updated
+        @Part image: MultipartBody.Part?,
         @Part("tipe") tipe: RequestBody,
         @Part("biaya") biaya: RequestBody,
         @Part("lokasi") lokasi: RequestBody
