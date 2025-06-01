@@ -32,6 +32,7 @@ fun TournamentCard(
     navController: NavController,
     isRegistered: Boolean = false
 ) {
+    val context = LocalContext.current
     val fullImageUrl = "http://10.0.2.2:3000${tournament.image}"
     Card(
         modifier = Modifier

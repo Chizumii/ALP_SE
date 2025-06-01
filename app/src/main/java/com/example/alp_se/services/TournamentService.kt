@@ -62,4 +62,30 @@ interface TournamentServiceApi {
         @Header("X-API-TOKEN") token: String,
         @Path("id") id: String
     ): Call<GeneralResponseModel>
+
+    @GET("/api/tournament/{tournamentId}/registration-status")
+    suspend fun checkRegistrationStatus(
+        @Header("X-API-TOKEN") token: String,
+        @Path("tournamentId") tournamentId: Int
+    ): Response<RegistrationStatusResponse>
+
+    @POST("/api/tournament/{tournamentId}/register")
+    suspend fun registerTeam(
+        @Header("X-API-TOKEN") token: String,
+        @Path("tournamentId") tournamentId: Int
+    ): Response<GeneralResponseModel>
+
+    // ADD THIS NEW METHOD for registering team with specific team ID
+    @POST("/api/tournament/{tournamentId}/register/{teamId}")
+    suspend fun registerTeamWithId(
+        @Header("X-API-TOKEN") token: String,
+        @Path("tournamentId") tournamentId: Int,
+        @Path("teamId") teamId: Int
+    ): Response<GeneralResponseModel>
+
+    @DELETE("/api/tournament/{tournamentId}/unregister")
+    suspend fun unregisterTeam(
+        @Header("X-API-TOKEN") token: String,
+        @Path("tournamentId") tournamentId: Int
+    ): Response<GeneralResponseModel>
 }
