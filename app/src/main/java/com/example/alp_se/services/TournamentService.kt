@@ -59,14 +59,9 @@ interface TournamentServiceApi {
         @Part("lokasi") lokasi: RequestBody
     ): Call<GeneralResponseModel>
 
-    @DELETE("/api/tournaments/{id}")
+    @DELETE("/api/tournament/{id}")
     fun deleteTournament(
         @Header("X-API-TOKEN") token: String,
-        @Path("id") id: String,
-        description: String,
-        image: String,
-        tipe: String,
-        biaya: Double,
-        lokasi: String
-    ): Call<TournamentResponse>
+        @Path("id") id: String
+    ): Call<GeneralResponseModel>
 }

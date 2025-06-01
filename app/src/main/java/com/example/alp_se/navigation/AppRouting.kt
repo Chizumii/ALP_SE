@@ -39,7 +39,7 @@ import com.example.alp_se.viewModels.TournamentViewModel
 fun AppRouting(
     tournamentViewModel: TournamentViewModel = viewModel(factory = TournamentViewModel.Factory)
 ) {
-    val token = "aa110648-5d97-4dad-926f-a076f295140f"
+    val token = "d5d4d10d-ac9a-4a75-a475-fa253b8b22b5"
     val localContext = LocalContext.current
     val navController = rememberNavController()
     val currentBackStackEntry by navController.currentBackStackEntryAsState()

@@ -17,7 +17,10 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.Divider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -44,7 +47,7 @@ fun TournamentDetailView(
     navController: NavController,
     tournamentViewModel: TournamentViewModel // Click handler for "Register"
 ) {
-    val fullImageUrl = "http://10.0.2.2:3000/images${tournament.image.substringAfter("/uploads")}"
+    val fullImageUrl = "http://10.0.2.2:3000${tournament.image}"
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -86,17 +89,18 @@ fun TournamentDetailView(
                             ,
                         contentAlignment = Alignment.Center
                     ) {
-                        Image(
-                            painter = painterResource(R.drawable.baseline_add_circle_outline_24),
-                            contentDescription = "Logo Button",
-
+                        Icon(
+                            imageVector = Icons.Filled.Edit, // Use the ImageVector from Material Icons
+                            contentDescription = "Edit icon", // Always provide a content description for accessibility
+                            modifier = Modifier.size(24.dp), // Adjust size as needed
+                            tint = Color(0xFF448AFF) // Adjust color as needed
                         )
                     }
                 }
 
                 Text(
                     text = "Tournament",
-                    fontSize = 20.sp,
+                    fontSize = 30.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color.White,
                     textAlign = TextAlign.Center
@@ -118,10 +122,11 @@ fun TournamentDetailView(
             // Title
             Text(
                 text = tournament.nama_tournament,
-                fontSize = 20.sp,
+                fontSize = 30.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color.White,
-                modifier = Modifier.padding(bottom = 16.dp)
+                textAlign = TextAlign.Center,
+                modifier = Modifier.padding(vertical = 16.dp).fillMaxWidth(),
             )
 
             // Image
@@ -153,14 +158,14 @@ fun TournamentDetailView(
             // Description Section
             Text(
                 text = "Description",
-                fontSize = 16.sp,
+                fontSize = 18.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color.White,
                 modifier = Modifier.padding(bottom = 8.dp)
             )
             Text(
                 text = tournament.description,
-                fontSize = 14.sp,
+                fontSize = 16.sp,
                 color = Color.Gray,
                 modifier = Modifier.padding(bottom = 16.dp)
             )
@@ -175,26 +180,26 @@ fun TournamentDetailView(
                 Column {
                     Text(
                         text = "Biaya Pendaftaran",
-                        fontSize = 14.sp,
+                        fontSize = 16.sp,
                         color = Color.Gray,
                         fontWeight = FontWeight.Bold
                     )
                     Text(
                         text = tournament.biaya.toString(),
-                        fontSize = 14.sp,
+                        fontSize = 16.sp,
                         color = Color.White
                     )
                 }
                 Column {
                     Text(
                         text = "Lokasi",
-                        fontSize = 14.sp,
+                        fontSize = 16.sp,
                         color = Color.Gray,
                         fontWeight = FontWeight.Bold
                     )
                     Text(
-                        text = "Jakarta",
-                        fontSize = 14.sp,
+                        text = tournament.lokasi,
+                        fontSize = 16.sp,
                         color = Color.White
                     )
                 }
@@ -209,13 +214,13 @@ fun TournamentDetailView(
                 Column {
                     Text(
                         text = "Rules",
-                        fontSize = 14.sp,
+                        fontSize = 16.sp,
                         color = Color.Gray,
                         fontWeight = FontWeight.Bold
                     )
                     Text(
                         text = tournament.tipe,
-                        fontSize = 14.sp,
+                        fontSize = 16.sp,
                         color = Color.White
                     )
                 }

@@ -85,7 +85,7 @@ fun TournamentView(
                     Box(
                         modifier = Modifier
                             .size(80.dp)
-                            .clickable { navController.navigate("tournamentCreate") }, // Handle click action here
+                            .clickable { tournamentViewModel.openCreate(navController) }, // Handle click action here
                         contentAlignment = Alignment.Center
                     ) {
                         Image(

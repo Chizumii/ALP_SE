@@ -81,6 +81,14 @@ fun CreateTournament(
         }
     )
 
+    LaunchedEffect(Unit) { // Use Unit as key to run once when the composable enters the composition
+        // Check if we are in "create" mode (i.e., no tournament being updated)
+        // This is crucial for when you navigate back to a "create" state
+        if (tournamentViewModel.currentTournament == null) {
+            tournamentViewModel.initializeForEdit(null)
+        }
+    }
+
     LaunchedEffect(tournamentViewModel.submissionStatus) {
         val dataStatus = tournamentViewModel.submissionStatus
         if (dataStatus is StringDataStatusUIState.Success) {
@@ -159,7 +167,7 @@ fun CreateTournament(
                         val modelToLoad = if (imageUrl.startsWith("content://")) {
                             Uri.parse(imageUrl)
                         } else {
-                            "http://10.0.2.2:3000$imageUrl"
+                            "http://10.0.2.2:3000${imageUrl}"
                         }
 
                         Image(
@@ -275,12 +283,6 @@ fun CreateTournament(
                             tournamentViewModel.updateTournament(
                                 navController = navController,
                                 tournamentId = tournamentViewModel.currentTournament!!.TournamentID,
-                                nameTournamentInput = tournamentViewModel.nameTournamentInput,
-                                descriptionInput = tournamentViewModel.descriptionInput,
-                                costInput = tournamentViewModel.costInput,
-                                imageInput = tournamentViewModel.imageInput,
-                                typeInput = tournamentViewModel.typeInput,
-                                lokasi = tournamentViewModel.lokasiInput,
                                 token = token,
                                 context = context
                             )
@@ -296,15 +298,49 @@ fun CreateTournament(
                         .fillMaxWidth()
                         .height(56.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFFE53935)
+                        containerColor = Color(0xFF4A90E2)
                     ),
                     shape = RoundedCornerShape(28.dp)
                 ) {
-                    Text(
-                        text = "Create Tournament",
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold
-                    )
+                    if(tournamentViewModel.currentTournament != null){
+                        Text(
+                            text = "Update Tournament",
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }else{
+                        Text(
+                            text = "Create Tournament",
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+                if(tournamentViewModel.currentTournament != null){
+                    Button(
+                        onClick = {
+                            tournamentViewModel.deleteTournament(
+                                navController = navController,
+                                tournamentId = tournamentViewModel.currentTournament!!.TournamentID,
+                                token = token
+                            )
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(56.dp)
+                            .padding(top = 10.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFFE53935)
+                        ),
+                        shape = RoundedCornerShape(28.dp)
+                    ) {
+                        Text(
+                            text = "Delete Tournament",
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+
+                        }
                 }
                 Spacer(modifier = Modifier.height(32.dp))
             }

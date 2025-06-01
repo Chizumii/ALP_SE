@@ -37,7 +37,7 @@ fun TournamentCard(
     tournamentViewModel: TournamentViewModel,
     navController: NavController
 ) {
-    val fullImageUrl = "http://10.0.2.2:3000/images${tournament.image.substringAfter("/uploads")}"
+    val fullImageUrl = "http://10.0.2.2:3000${tournament.image}"
     Card(
         modifier = Modifier
             .fillMaxWidth()

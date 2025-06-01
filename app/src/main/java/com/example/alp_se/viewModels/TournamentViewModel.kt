@@ -155,6 +155,14 @@ class TournamentViewModel(
         }
     }
 
+    fun openCreate(
+        navController: NavController
+    ){
+        currentTournament = null
+        initializeForEdit(null)
+        navController.navigate("tournamentCreate")
+    }
+
     fun openUpdate(
         navController: NavController,
         tournament: TournamentResponse
@@ -242,12 +250,6 @@ class TournamentViewModel(
     fun updateTournament(
         navController: NavController,
         tournamentId: Int, // The ID of the tournament to update
-        nameTournamentInput: String,
-        descriptionInput: String,
-        imageInput: String, // String Uri
-        typeInput: String,
-        costInput: Int,
-        lokasi: String,
         token: String,
         context: Context
     ) {
@@ -276,8 +278,10 @@ class TournamentViewModel(
                             response: Response<GeneralResponseModel>
                         ) {
                             if (response.isSuccessful) {
+                                currentTournament = null
+                                initializeForEdit(null)
                                 navController.navigate("Tournament") {
-//                                    popUpTo("tournamentCreate") { inclusive = true }
+                                    popUpTo("tournamentCreate") { inclusive = true }
                                 }
                             } else {
                                 submissionStatus = StringDataStatusUIState.Failed(response.errorBody()?.string() ?: "Failed to update tournament.")
@@ -306,6 +310,59 @@ class TournamentViewModel(
                 submissionStatus = StringDataStatusUIState.Failed(e.localizedMessage)
             } catch (e: SecurityException) {
                 submissionStatus = StringDataStatusUIState.Failed(e.localizedMessage)
+            }
+        }
+    }
+
+    fun deleteTournament(
+        navController: NavController,
+        tournamentId: Int,
+        token: String
+    ){
+        viewModelScope.launch {
+            try {
+                val call = tournamentRepository.deleteTournament(
+                    id = tournamentId,
+                    token = token
+                )
+
+                val response = suspendCancellableCoroutine { continuation ->
+                    call.enqueue(object : Callback<GeneralResponseModel> {
+                        override fun onResponse(
+                            call: Call<GeneralResponseModel>,
+                            response: Response<GeneralResponseModel>
+                        ) {
+                            if (response.isSuccessful) {
+                                currentTournament = null
+                                initializeForEdit(null)
+                                navController.navigate("Tournament") {
+                                    popUpTo("tournamentCreate") { inclusive = true }
+                                }
+                            } else {
+                                submissionStatus = StringDataStatusUIState.Failed(
+                                    response.errorBody()?.string() ?: "Failed to update tournament."
+                                )
+                            }
+                            continuation.resume(response)
+                        }
+
+                        override fun onFailure(call: Call<GeneralResponseModel>, t: Throwable) {
+                            submissionStatus = StringDataStatusUIState.Failed(t.localizedMessage)
+                            continuation.resumeWith(Result.failure(t))
+                        }
+                    })
+                    continuation.invokeOnCancellation {
+                        call.cancel()
+                    }
+                }
+
+                if (response.isSuccessful) {
+                    navController.navigate("Tournament") {
+//                        popUpTo("CreateTournament") { inclusive = true } // Or popUpTo TournamentDetail if you have one
+                    }
+                }
+            } catch (error: IOException) {
+
             }
         }
     }

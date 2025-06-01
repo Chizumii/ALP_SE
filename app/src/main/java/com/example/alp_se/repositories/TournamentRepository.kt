@@ -41,13 +41,9 @@ interface TournamentRepository {
     ): Call<GeneralResponseModel>
 
     fun deleteTournament(
-        nama_tournament: String,
-        description: String,
-        image: String,
-        tipe: String,
-        biaya: Double,
-        lokasi: String
-    ): Call<TournamentResponse>
+        id: Int,
+        token: String
+    ): Call<GeneralResponseModel>
 
    suspend fun getALLTournament(
         token: String,
@@ -160,22 +156,12 @@ class NetworkTournamentRepository(
     }
 
     override fun deleteTournament(
-        nama_tournament: String,
-        description: String,
-        image: String,
-        tipe: String,
-        biaya: Double,
-        lokasi: String
-    ): Call<TournamentResponse> {
-        val token = "X-API-SERVICE"
+        id : Int,
+        token: String
+    ): Call<GeneralResponseModel> {
         return tournamentServiceApi.deleteTournament(
-            token,
-            nama_tournament,
-            description,
-            image,
-            tipe,
-            biaya,
-            lokasi
+            token = token,
+            id = id.toString()
         )
     }
 }
