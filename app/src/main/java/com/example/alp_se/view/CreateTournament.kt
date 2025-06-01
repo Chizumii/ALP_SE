@@ -287,11 +287,17 @@ fun CreateTournament(
                                 context = context
                             )
                         } else {
-                            tournamentViewModel.createTournament(
-                                navController = navController,
-                                token = token,
-                                context = context
-                            )
+                            if(tournamentViewModel.nameTournamentInput.isNullOrEmpty() || tournamentViewModel.descriptionInput.isNullOrEmpty() || tournamentViewModel.costInput == 0 || tournamentViewModel.lokasiInput.isNullOrEmpty() || tournamentViewModel.typeInput.isNullOrEmpty()){
+                                Toast.makeText(context, "Error, Please Fill all Inputs", Toast.LENGTH_SHORT).show()
+                            }else{
+                                tournamentViewModel.createTournament(
+                                    navController = navController,
+                                    token = token,
+                                    context = context
+                                )
+                            }
+
+
                         }
                     },
                     modifier = Modifier

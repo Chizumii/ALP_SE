@@ -9,21 +9,31 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Divider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -40,6 +50,7 @@ fun TournamentView(
 ) {
 
     val tournament by tournamentViewModel.tounament.collectAsState()
+    val searchText = remember { mutableStateOf("") }
 
     LaunchedEffect(Unit) {
         tournamentViewModel.fetchTournaments(
@@ -112,6 +123,8 @@ fun TournamentView(
             )
         }
 
+
+
         // LazyColumn dengan padding untuk menyesuaikan posisi
         LazyColumn(
             modifier = Modifier
@@ -122,14 +135,89 @@ fun TournamentView(
                     end = 16.dp
                 ) // Beri ruang untuk navbar atas dan bawah
         ) {
-            items(tournament) { tournament ->
-                TournamentCard(
-                    tournament,
-                    tournamentViewModel = tournamentViewModel,
-                            navController = navController
-                )
+            item {
+                SearchBar(searchText.value) { newText ->
+                    searchText.value = newText
+                }
+
+            }
+            val filteredTournaments = tournament.filter {
+                it.nama_tournament.contains(searchText.value, ignoreCase = true)
             }
 
+            if (filteredTournaments.isEmpty()) {
+                item {
+                    Box(
+                        modifier = Modifier
+                            .fillParentMaxWidth() // Takes the full width of the LazyColumn item
+                            .padding(vertical = 32.dp), // Add some vertical padding for spacing
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = if (searchText.value.isNotEmpty()) {
+                                "No tournaments found matching \"${searchText.value}\"."
+                            } else if (tournament.isEmpty()) { // Check original list if search is empty
+                                "There are no tournaments available at the moment."
+                            } else { // Original list has items, but filter (even if empty search) results in none
+                                "No tournaments found."
+                            },
+                            color = Color.White,
+                            fontSize = 16.sp,
+                            textAlign = TextAlign.Center
+                        )
+                    }
+                }
+            } else {
+                items(
+                    items = filteredTournaments,
+                    // key = { tournament -> tournament.id } // Optional: if your tournament object has a stable ID
+                ) { tournamentItem ->
+                    TournamentCard(
+                        tournament = tournamentItem, // Pass the individual tournament item
+                        tournamentViewModel = tournamentViewModel,
+                        navController = navController
+                    )
+                }
+            }
+
+        }
+    }
+}
+
+@Composable
+
+fun SearchBar(searchText: String, onSearchTextChange: (String) -> Unit) {
+    Box(
+        modifier = Modifier
+            .padding(vertical = 20.dp, horizontal = 10.dp)
+            .width(380.dp)
+            .height(47.dp)
+
+            .background(Color(0xFF2D2D2D), RoundedCornerShape(12.dp))
+            .padding(horizontal = 16.dp, vertical = 12.dp)
+    ) {
+        BasicTextField(
+            value = searchText,
+            onValueChange = onSearchTextChange,
+            textStyle = TextStyle(
+                color = Color.White,
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Normal
+            ),
+            keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Search),
+            keyboardActions = KeyboardActions(onSearch = {
+                // Handle search action (currently placeholder)
+            })
+        )
+        if (searchText.isEmpty()) {
+            Text(
+                text = "Search",
+                style = TextStyle(
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight(400),
+                    color = Color.White,
+                )
+            )
         }
     }
 }
