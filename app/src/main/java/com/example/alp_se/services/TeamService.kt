@@ -7,7 +7,6 @@ import retrofit2.Response
 import retrofit2.http.*
 import android.content.Context
 import android.net.Uri
-import com.example.alp_se.models.*
 import com.example.alp_se.repositories.TeamRepository
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.RequestBody.Companion.asRequestBody
@@ -21,41 +20,53 @@ interface TeamApiService {
     @Multipart
     @POST("api/team")
     suspend fun createTeam(
+        @Header("X-API-TOKEN") token: String,
         @Part("namatim") namatim: RequestBody,
         @Part image: MultipartBody.Part
     ): Response<TeamResponse>
 
     @GET("api/team")
-    suspend fun getAllTeams(): Response<TeamsResponse>
+    suspend fun getAllTeams(
+        @Header("X-API-TOKEN") token: String
+    ): Response<TeamsResponse>
 
     @Multipart
     @PATCH("api/team/{id}")
     suspend fun updateTeam(
+        @Header("X-API-TOKEN") token: String,
         @Path("id") id: Int,
         @Part("namatim") namatim: RequestBody,
         @Part image: MultipartBody.Part
     ): Response<TeamResponse>
 
     @DELETE("api/team/{id}")
-    suspend fun deleteTeam(@Path("id") id: Int): Response<TeamResponse>
+    suspend fun deleteTeam(
+        @Header("X-API-TOKEN") token: String,
+        @Path("id") id: Int
+    ): Response<TeamResponse>
 }
 
 
 class TeamService(
     private val teamRepository: TeamRepository
+
 ) {
     companion object {
-        private const val BASE_URL = "http://192.168.105.69:3000/"
+        private const val BASE_URL = "http://192.168.253.69:3000/"
     }
-
+    val token = "6d548eaf-e6bc-4b3b-bf07-60b20b7a1b02"
     suspend fun createTeam(namatim: String, imageUri: Uri, context: Context): Result<Team> {
         return try {
             val namatimBody = namatim.toRequestBody("text/plain".toMediaTypeOrNull())
             val imagePart = createImagePart(imageUri, context)
+            val response = teamRepository.createTeam(namatimBody, imagePart, token)
 
-            val response = teamRepository.createTeam(namatimBody, imagePart)
             if (response.isSuccessful) {
                 response.body()?.let { teamResponse ->
+                    // Add this logging
+                    println("API Response: ${teamResponse.data}")
+                    println("Team ID from API: ${teamResponse.data.TeamId}")
+
                     Result.success(teamResponse.data)
                 } ?: Result.failure(Exception("Empty response body"))
             } else {
@@ -69,7 +80,7 @@ class TeamService(
 
     suspend fun getAllTeams(): Result<List<Team>> {
         return try {
-            val response = teamRepository.getAllTeams()
+            val response = teamRepository.getAllTeams(token)
             if (response.isSuccessful) {
                 response.body()?.let { teamsResponse ->
                     Result.success(teamsResponse.data)
@@ -88,7 +99,7 @@ class TeamService(
             val namatimBody = namatim.toRequestBody("text/plain".toMediaTypeOrNull())
             val imagePart = createImagePart(imageUri, context)
 
-            val response = teamRepository.updateTeam(id, namatimBody, imagePart)
+            val response = teamRepository.updateTeam(id, namatimBody, imagePart, token)
             if (response.isSuccessful) {
                 response.body()?.let { teamResponse ->
                     Result.success(teamResponse.data)
@@ -104,7 +115,7 @@ class TeamService(
 
     suspend fun deleteTeam(id: Int): Result<Boolean> {
         return try {
-            val response = teamRepository.deleteTeam(id)
+            val response = teamRepository.deleteTeam(id, token)
             if (response.isSuccessful) {
                 Result.success(true)
             } else {
@@ -140,7 +151,6 @@ class TeamService(
         val inputStream: InputStream = contentResolver.openInputStream(imageUri)
             ?: throw Exception("Unable to open image stream")
 
-        // Create a temporary file with proper extension
         val mimeType = contentResolver.getType(imageUri)
         val extension = when (mimeType) {
             "image/jpeg" -> ".jpg"

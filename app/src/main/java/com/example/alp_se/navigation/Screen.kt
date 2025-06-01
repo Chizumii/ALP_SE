@@ -2,19 +2,19 @@ package com.example.alp_se.navigation
 
 sealed class Screen(val route: String) {
     object News : Screen("News")
-    object Tournament : Screen("Tournament")
     object Home : Screen("Home")
-    object TournamentCreate: Screen("tournamentCreate")
-//    object TournamentDetail : Screen("tournament_detail/{TournamentID}") {
-//        fun createRoute(TournamentID: Int) = "tournament_detail/$TournamentID"
-//    }
-    object TournamentSubmit : Screen("tournament_submit/{TournamentID}") {
-        fun createRoute(TournamentID: Int) = "tournament_submit/$TournamentID"
+    object Tournament : Screen("Tournament")
+    object TournamentCreate : Screen("tournamentCreate")
+    object TournamentDetail : Screen("tournamentDetail/{TournamentID}") {
+        fun createRoute(tournamentId: Int) = "tournamentDetail/$tournamentId"
     }
-    object Team : Screen("team")
-    object TeamCreate : Screen("team_create")
-    object TeamEdit : Screen("team_edit/{teamId}") {
-        fun createRoute(teamId: Int) = "team_edit/$teamId"
+    object TournamentSubmit : Screen("tournamentSubmit/{TournamentID}") {
+        fun createRoute(tournamentId: Int) = "tournamentSubmit/$tournamentId"
     }
-    object Profile: Screen("Profile")
+    object Team : Screen("Team")
+    object TeamCreate : Screen("teamCreate")
+    object TeamEdit : Screen("teamEdit/{teamId}") {
+        fun createRoute(teamId: Int) = "teamEdit/$teamId"
+    }
+    object Profile : Screen("Profile")
 }

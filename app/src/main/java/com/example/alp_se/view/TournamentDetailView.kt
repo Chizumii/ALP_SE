@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Divider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -24,6 +25,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -32,19 +34,41 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
+import coil.request.ImageRequest
 import com.example.alp_se.R
 import com.example.alp_se.models.TournamentResponse
 import com.example.alp_se.navigation.Screen
-import coil.compose.rememberAsyncImagePainter
 import com.example.alp_se.viewModels.TournamentViewModel
+import androidx.compose.material3.CircularProgressIndicator
+import android.widget.Toast
+import androidx.compose.foundation.layout.width
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 
 @Composable
 fun TournamentDetailView(
     tournament: TournamentResponse,
     navController: NavController,
-    tournamentViewModel: TournamentViewModel // Click handler for "Register"
+    tournamentViewModel: TournamentViewModel,
+    token: String // Add token parameter
 ) {
+    val context = LocalContext.current
     val fullImageUrl = "http://10.0.2.2:3000/images${tournament.image.substringAfter("/uploads")}"
+    val registrationStatus by tournamentViewModel.registrationStatusMap.collectAsState()
+    val isRegistered = registrationStatus[tournament.TournamentID] ?: false
+
+    // Check registration status when the composable is first composed
+    LaunchedEffect(tournament.TournamentID) {
+        tournamentViewModel.checkRegistrationStatus(tournament.TournamentID, token)
+    }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -76,20 +100,18 @@ fun TournamentDetailView(
                         contentDescription = "Logo",
                         modifier = Modifier.size(80.dp)
                     )
-                    Spacer(modifier = Modifier.weight(1f)) // Spacer to push content to the center
+                    Spacer(modifier = Modifier.weight(1f))
                     Box(
                         modifier = Modifier
                             .size(80.dp)
                             .clickable {
                                 tournamentViewModel.openUpdate(navController, tournament)
-                            }
-                            ,
+                            },
                         contentAlignment = Alignment.Center
                     ) {
                         Image(
                             painter = painterResource(R.drawable.baseline_add_circle_outline_24),
-                            contentDescription = "Logo Button",
-
+                            contentDescription = "Update Button",
                         )
                     }
                 }
@@ -102,7 +124,7 @@ fun TournamentDetailView(
                     textAlign = TextAlign.Center
                 )
             }
-            Divider(
+            HorizontalDivider(
                 color = Color.Gray,
                 thickness = 1.dp,
                 modifier = Modifier.fillMaxWidth()
@@ -115,6 +137,40 @@ fun TournamentDetailView(
                 .verticalScroll(rememberScrollState())
                 .padding(top = 90.dp, bottom = 80.dp, start = 16.dp, end = 16.dp)
         ) {
+            // Registration Status Banner (at the top)
+            if (isRegistered) {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 16.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = Color(0xFF4CAF50)
+                    ),
+                    shape = RoundedCornerShape(8.dp)
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.CheckCircle,
+                            contentDescription = "Registered",
+                            tint = Color.White,
+                            modifier = Modifier.size(24.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "You are already registered for this tournament",
+                            color = Color.White,
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+            }
+
             // Title
             Text(
                 text = tournament.nama_tournament,
@@ -124,28 +180,19 @@ fun TournamentDetailView(
                 modifier = Modifier.padding(bottom = 16.dp)
             )
 
-            // Image
-//            SubcomposeAsyncImage(
-//                model = tournament.image, // This could be a URL, file path, or other input
-//                contentDescription = "Tournament Image",
-//                contentScale = ContentScale.FillWidth,
-//                modifier = Modifier.fillMaxSize(),
-//                loading = {
-//                    // Show a loading indicator while the image is being loaded
-//                    CircularProgressIndicator(
-//                        color = Color.White,
-//                        strokeWidth = 4.dp,
-//                        modifier = Modifier.fillMaxSize()
-//                    )
-//                }
-//            )
-            Image(
-                painter = rememberAsyncImagePainter(model = fullImageUrl),
+            // Image with proper AsyncImage
+            AsyncImage(
+                model = ImageRequest.Builder(context)
+                    .data(fullImageUrl)
+                    .crossfade(true)
+                    .build(),
                 contentDescription = "Tournament Banner",
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(200.dp), // Set a fixed height or aspect ratio
-                contentScale = ContentScale.Crop // Crop to fill bounds
+                    .height(200.dp),
+                contentScale = ContentScale.Crop,
+                placeholder = painterResource(id = R.drawable.pppppppp),
+                error = painterResource(id = R.drawable.pppppppp)
             )
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -180,7 +227,7 @@ fun TournamentDetailView(
                         fontWeight = FontWeight.Bold
                     )
                     Text(
-                        text = tournament.biaya.toString(),
+                        text = "Rp ${tournament.biaya}",
                         fontSize = 14.sp,
                         color = Color.White
                     )
@@ -193,7 +240,7 @@ fun TournamentDetailView(
                         fontWeight = FontWeight.Bold
                     )
                     Text(
-                        text = "Jakarta",
+                        text = tournament.lokasi,
                         fontSize = 14.sp,
                         color = Color.White
                     )
@@ -220,21 +267,29 @@ fun TournamentDetailView(
                     )
                 }
 
-                // Register Button
+                // Register Button - Dynamic based on registration status
                 Box(
                     modifier = Modifier
                         .background(
-                            color = Color(0xFF448AFF), // Blue background color
-                            shape = RoundedCornerShape(8.dp) // Rounded corners
+                            color = if (isRegistered) Color.Gray else Color(0xFF448AFF),
+                            shape = RoundedCornerShape(8.dp)
                         )
                         .padding(horizontal = 16.dp, vertical = 8.dp)
-                        .clickable {
-                            navController.navigate(Screen.TournamentSubmit.createRoute(tournament.TournamentID))
+                        .let { modifier ->
+                            if (!isRegistered) {
+                                modifier.clickable {
+                                    navController.navigate(
+                                        Screen.TournamentSubmit.createRoute(tournament.TournamentID)
+                                    )
+                                }
+                            } else {
+                                modifier
+                            }
                         },
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = "Register",
+                        text = if (isRegistered) "Already Registered" else "Register",
                         color = Color.White,
                         fontWeight = FontWeight.Bold
                     )

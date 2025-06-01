@@ -134,7 +134,7 @@ fun TeamView(
                         TeamList(
                             teams = uiState.displayTeams,
                             onEditClick = { team ->
-                                navController.navigate(Screen.TeamEdit.createRoute(team.teamId))
+                                navController.navigate(Screen.TeamEdit.createRoute(team.TeamId))
                             },
                             onDeleteClick = { team ->
                                 showDeleteDialog = team
@@ -158,7 +158,7 @@ fun TeamView(
             confirmButton = {
                 TextButton(
                     onClick = {
-                        teamViewModel.deleteTeam(team.teamId)
+                        teamViewModel.deleteTeam(team.TeamId)
                         showDeleteDialog = null
                     }
                 ) {
@@ -334,7 +334,7 @@ fun TeamCard(
                 modifier = Modifier.weight(1f)
             ) {
                 Text(
-                    text = "Team ID: ${team.teamId}",
+                    text = "Team ID: ${team.TeamId}",
                     color = Color.Gray,
                     fontSize = 14.sp
                 )

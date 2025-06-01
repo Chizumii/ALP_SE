@@ -17,7 +17,6 @@ import com.example.alp_se.EshypeApplication
 import com.example.alp_se.enums.PagesEnum
 import com.example.alp_se.models.ErrorModel
 import com.example.alp_se.models.GeneralResponseModel
-import com.example.alp_se.models.TournamentModel
 import com.example.alp_se.models.TournamentResponse
 import com.example.alp_se.navigation.Screen
 import com.example.alp_se.repositories.TournamentRepository
@@ -35,7 +34,6 @@ import retrofit2.Response
 import java.io.IOException
 import kotlin.coroutines.resume
 import kotlin.math.log
-
 
 class TournamentViewModel(
     private val tournamentRepository: TournamentRepository
@@ -61,6 +59,13 @@ class TournamentViewModel(
     var role by mutableStateOf("")
 
     var currentTournament: TournamentResponse? by mutableStateOf(null)
+
+    // Registration status management
+    private val _registrationStatusMap = MutableStateFlow<Map<Int, Boolean>>(emptyMap())
+    val registrationStatusMap: StateFlow<Map<Int, Boolean>> = _registrationStatusMap.asStateFlow()
+
+    var registrationLoading by mutableStateOf(false)
+        private set
 
     private val _tournament = MutableStateFlow<MutableList<TournamentResponse>>(mutableListOf())
 
@@ -96,8 +101,6 @@ class TournamentViewModel(
     fun updateLokasiInput(input: String) {
         lokasiInput = input
     }
-
-
 
     companion object {
         val Factory: ViewModelProvider.Factory = viewModelFactory {
@@ -184,6 +187,158 @@ class TournamentViewModel(
         }
     }
 
+    // Registration Status Functions
+    fun getRegistrationStatus(tournamentId: Int): Boolean {
+        return _registrationStatusMap.value[tournamentId] ?: false
+    }
+
+    fun checkRegistrationStatus(tournamentId: Int, token: String) {
+        viewModelScope.launch {
+            try {
+                registrationLoading = true
+                val response = tournamentRepository.checkRegistrationStatus(tournamentId, token)
+
+                if (response.isSuccessful) {
+                    val registrationData = response.body()?.data
+                    registrationData?.let {
+                        val currentMap = _registrationStatusMap.value.toMutableMap()
+                        currentMap[tournamentId] = it.isRegistered
+                        _registrationStatusMap.value = currentMap
+                        Log.d("TournamentViewModel", "Registration status for tournament $tournamentId: ${it.isRegistered}")
+                    }
+                } else {
+                    Log.e("TournamentViewModel", "Failed to check registration status: ${response.code()}")
+                }
+            } catch (e: Exception) {
+                Log.e("TournamentViewModel", "Error checking registration status: ${e.message}")
+            } finally {
+                registrationLoading = false
+            }
+        }
+    }
+
+    fun registerTeam(
+        tournamentId: Int,
+        token: String,
+        onSuccess: () -> Unit = {},
+        onError: (String) -> Unit = {}
+    ) {
+        viewModelScope.launch {
+            try {
+                registrationLoading = true
+                val response = tournamentRepository.registerTeam(tournamentId, token)
+
+                if (response.isSuccessful) {
+                    // Update local state
+                    val currentMap = _registrationStatusMap.value.toMutableMap()
+                    currentMap[tournamentId] = true
+                    _registrationStatusMap.value = currentMap
+
+                    Log.d("TournamentViewModel", "Successfully registered for tournament $tournamentId")
+                    onSuccess()
+                } else {
+                    val errorMessage = try {
+                        val errorBody = response.errorBody()?.string()
+                        val errorModel = Gson().fromJson(errorBody, ErrorModel::class.java)
+                        errorModel.errors ?: "Failed to register for tournament"
+                    } catch (e: Exception) {
+                        "Failed to register for tournament"
+                    }
+                    Log.e("TournamentViewModel", "Registration failed: $errorMessage")
+                    onError(errorMessage)
+                }
+            } catch (e: Exception) {
+                val errorMessage = e.localizedMessage ?: "Network error occurred"
+                Log.e("TournamentViewModel", "Error registering for tournament: $errorMessage")
+                onError(errorMessage)
+            } finally {
+                registrationLoading = false
+            }
+        }
+    }
+
+    // ADD THIS NEW METHOD that your TournamentTeamSubmit screen is calling
+    fun registerTeamWithId(
+        tournamentId: Int,
+        teamId: Int,
+        token: String,
+        onSuccess: () -> Unit = {},
+        onError: (String) -> Unit = {}
+    ) {
+        viewModelScope.launch {
+            try {
+                registrationLoading = true
+                val response = tournamentRepository.registerTeamWithId(tournamentId, teamId, token)
+
+                if (response.isSuccessful) {
+                    // Update local state
+                    val currentMap = _registrationStatusMap.value.toMutableMap()
+                    currentMap[tournamentId] = true
+                    _registrationStatusMap.value = currentMap
+
+                    Log.d("TournamentViewModel", "Successfully registered team $teamId for tournament $tournamentId")
+                    onSuccess()
+                } else {
+                    val errorMessage = try {
+                        val errorBody = response.errorBody()?.string()
+                        val errorModel = Gson().fromJson(errorBody, ErrorModel::class.java)
+                        errorModel.errors ?: "Failed to register team for tournament"
+                    } catch (e: Exception) {
+                        "Failed to register team for tournament"
+                    }
+                    Log.e("TournamentViewModel", "Team registration failed: $errorMessage")
+                    onError(errorMessage)
+                }
+            } catch (e: Exception) {
+                val errorMessage = e.localizedMessage ?: "Network error occurred"
+                Log.e("TournamentViewModel", "Error registering team for tournament: $errorMessage")
+                onError(errorMessage)
+            } finally {
+                registrationLoading = false
+            }
+        }
+    }
+
+    fun unregisterTeam(
+        tournamentId: Int,
+        token: String,
+        onSuccess: () -> Unit = {},
+        onError: (String) -> Unit = {}
+    ) {
+        viewModelScope.launch {
+            try {
+                registrationLoading = true
+                val response = tournamentRepository.unregisterTeam(tournamentId, token)
+
+                if (response.isSuccessful) {
+                    // Update local state
+                    val currentMap = _registrationStatusMap.value.toMutableMap()
+                    currentMap[tournamentId] = false
+                    _registrationStatusMap.value = currentMap
+
+                    Log.d("TournamentViewModel", "Successfully unregistered from tournament $tournamentId")
+                    onSuccess()
+                } else {
+                    val errorMessage = try {
+                        val errorBody = response.errorBody()?.string()
+                        val errorModel = Gson().fromJson(errorBody, ErrorModel::class.java)
+                        errorModel.errors ?: "Failed to unregister from tournament"
+                    } catch (e: Exception) {
+                        "Failed to unregister from tournament"
+                    }
+                    Log.e("TournamentViewModel", "Unregistration failed: $errorMessage")
+                    onError(errorMessage)
+                }
+            } catch (e: Exception) {
+                val errorMessage = e.localizedMessage ?: "Network error occurred"
+                Log.e("TournamentViewModel", "Error unregistering from tournament: $errorMessage")
+                onError(errorMessage)
+            } finally {
+                registrationLoading = false
+            }
+        }
+    }
+
     fun createTournament(
         navController: NavController,
         token: String,
@@ -206,30 +361,30 @@ class TournamentViewModel(
                 )
 
                 call.enqueue(object : Callback<GeneralResponseModel> {
-                        override fun onResponse(
-                            call: Call<GeneralResponseModel>,
-                            response: Response<GeneralResponseModel>
-                        ) {
-                            if (response.isSuccessful) {
-                                Log.d("TournamentViewModel", "Tournament created successfully")
-                                initializeForEdit(null)
-                                navController.navigate("Tournament") {
-                                    popUpTo("tournamentCreate") { inclusive = true }
-                                }
-                            }else{
-                                val errorMessage = Gson().fromJson(
-                                    response.errorBody()!!.charStream(),
-                                    ErrorModel::class.java
-                                )
-                                Log.e("API Response", "Error: ${response.errorBody()}")
-                                submissionStatus = StringDataStatusUIState.Failed(errorMessage.errors)
+                    override fun onResponse(
+                        call: Call<GeneralResponseModel>,
+                        response: Response<GeneralResponseModel>
+                    ) {
+                        if (response.isSuccessful) {
+                            Log.d("TournamentViewModel", "Tournament created successfully")
+                            initializeForEdit(null)
+                            navController.navigate("Tournament") {
+                                popUpTo("tournamentCreate") { inclusive = true }
                             }
+                        }else{
+                            val errorMessage = Gson().fromJson(
+                                response.errorBody()!!.charStream(),
+                                ErrorModel::class.java
+                            )
+                            Log.e("API Response", "Error: ${response.errorBody()}")
+                            submissionStatus = StringDataStatusUIState.Failed(errorMessage.errors)
                         }
+                    }
 
-                        override fun onFailure(call: Call<GeneralResponseModel>, t: Throwable) {
-                            submissionStatus = StringDataStatusUIState.Failed(t.localizedMessage)
-                        }
-                    })
+                    override fun onFailure(call: Call<GeneralResponseModel>, t: Throwable) {
+                        submissionStatus = StringDataStatusUIState.Failed(t.localizedMessage)
+                    }
+                })
 
 
 
@@ -255,7 +410,8 @@ class TournamentViewModel(
             try {
                 // If the imageInput is a URL (from backend) or empty, we don't convert it to Uri
                 // Only convert to Uri if it's a new image selected from gallery (content:// URI)
-                val imageUri = if (imageInput.startsWith("content://")) Uri.parse(imageInput) else null
+                val imageUri =
+                    if (imageInput.startsWith("content://")) Uri.parse(imageInput) else null
 
                 val call = tournamentRepository.updateTournament(
                     context = context,
@@ -280,7 +436,9 @@ class TournamentViewModel(
 //                                    popUpTo("tournamentCreate") { inclusive = true }
                                 }
                             } else {
-                                submissionStatus = StringDataStatusUIState.Failed(response.errorBody()?.string() ?: "Failed to update tournament.")
+                                submissionStatus = StringDataStatusUIState.Failed(
+                                    response.errorBody()?.string() ?: "Failed to update tournament."
+                                )
                             }
                             continuation.resume(response)
                         }
@@ -309,5 +467,4 @@ class TournamentViewModel(
             }
         }
     }
-
 }

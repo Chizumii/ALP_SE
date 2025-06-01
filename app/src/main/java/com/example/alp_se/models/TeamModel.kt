@@ -1,7 +1,7 @@
 package com.example.alp_se.models
 
 data class Team(
-    val teamId: Int,
+    val TeamId: Int,
     val namatim: String,
     val image: String
 )

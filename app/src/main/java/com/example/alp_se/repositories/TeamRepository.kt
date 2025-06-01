@@ -4,24 +4,27 @@ import com.example.alp_se.models.*
 import com.example.alp_se.services.TeamApiService
 import okhttp3.MultipartBody
 import okhttp3.RequestBody
-import retrofit2.Call
 import retrofit2.Response
 
 interface TeamRepository {
     suspend fun createTeam(
         namatim: RequestBody,
-        image: MultipartBody.Part
+        image: MultipartBody.Part,
+        token: String
     ): Response<TeamResponse>
 
-    suspend fun getAllTeams(): Response<TeamsResponse>
+    suspend fun getAllTeams(token: String): Response<TeamsResponse>
 
     suspend fun updateTeam(
         id: Int,
         namatim: RequestBody,
-        image: MultipartBody.Part
+        image: MultipartBody.Part,
+        token: String
     ): Response<TeamResponse>
 
-    suspend fun deleteTeam(id: Int): Response<TeamResponse>
+    suspend fun deleteTeam(id: Int, token: String
+    ): Response<TeamResponse>
+
 }
 
 class NetworkTeamRepository(
@@ -30,24 +33,27 @@ class NetworkTeamRepository(
 
     override suspend fun createTeam(
         namatim: RequestBody,
-        image: MultipartBody.Part
+        image: MultipartBody.Part,
+        token: String
     ): Response<TeamResponse> {
-        return teamApiService.createTeam(namatim, image)
+        return teamApiService.createTeam(token, namatim, image)
     }
 
-    override suspend fun getAllTeams(): Response<TeamsResponse> {
-        return teamApiService.getAllTeams()
+
+    override suspend fun getAllTeams(token: String): Response<TeamsResponse> {
+        return teamApiService.getAllTeams(token)
     }
 
     override suspend fun updateTeam(
         id: Int,
         namatim: RequestBody,
-        image: MultipartBody.Part
+        image: MultipartBody.Part,
+        token: String
     ): Response<TeamResponse> {
-        return teamApiService.updateTeam(id, namatim, image)
+        return teamApiService.updateTeam(token, id, namatim, image)
     }
 
-    override suspend fun deleteTeam(id: Int): Response<TeamResponse> {
-        return teamApiService.deleteTeam(id)
+    override suspend fun deleteTeam(id: Int, token: String): Response<TeamResponse> {
+        return teamApiService.deleteTeam(token, id)
     }
 }

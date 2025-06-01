@@ -63,7 +63,7 @@ fun CreateTeamView(
     // Load team data for editing
     LaunchedEffect(teamId) {
         if (isEditMode && teamId != null) {
-            uiState.teams.find { it.teamId == teamId }?.let { team ->
+            uiState.teams.find { it.TeamId == teamId }?.let { team ->
                 teamName = team.namatim
                 // Note: For editing, you might want to handle existing image differently
             }
