@@ -33,7 +33,7 @@ fun TournamentCard(
     isRegistered: Boolean = false
 ) {
     val context = LocalContext.current
-    val fullImageUrl = "http://10.0.2.2:3000${tournament.image}"
+    val fullImageUrl = "http://192.168.253.69:3000${tournament.image}"
     Card(
         modifier = Modifier
             .fillMaxWidth()

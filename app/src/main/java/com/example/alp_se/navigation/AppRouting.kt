@@ -31,7 +31,7 @@ fun AppRouting(
     tournamentViewModel: TournamentViewModel = viewModel(factory = TournamentViewModel.Factory),
     teamViewModel: TeamViewModel = viewModel(factory = TeamViewModel.Factory)
 ) {
-    val token = "e315d69b-14a1-4bef-98c0-15cd6fa1a95d"
+    val token = "7a1ce296-ab8e-40ce-bce8-add67c22d965"
     val localContext = LocalContext.current
     val navController = rememberNavController()
     val currentBackStackEntry by navController.currentBackStackEntryAsState()

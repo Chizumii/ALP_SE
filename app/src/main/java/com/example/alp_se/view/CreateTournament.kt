@@ -166,7 +166,7 @@ fun CreateTournament(
                         val modelToLoad = if (imageUrl.startsWith("content://")) {
                             Uri.parse(imageUrl)
                         } else {
-                            "http://10.0.2.2:3000${imageUrl}"
+                            "http://192.168.253.69:3000${imageUrl}"
                         }
 
                         Image(
