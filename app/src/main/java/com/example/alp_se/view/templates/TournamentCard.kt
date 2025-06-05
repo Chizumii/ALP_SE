@@ -2,12 +2,23 @@ package com.example.alp_se.view.templates
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AccountBox
+import androidx.compose.material.icons.filled.AppRegistration
+import androidx.compose.material.icons.filled.AttachMoney
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -42,7 +53,7 @@ fun TournamentCard(
     isRegistered: Boolean = false
 ) {
     val context = LocalContext.current
-    val fullImageUrl = "http://192.168.253.69:3000${tournament.image}"
+    val fullImageUrl = "http://192.168.88.32:3000${tournament.image}"
 
     Card(
         modifier = Modifier
@@ -180,7 +191,7 @@ fun TournamentCard(
                                     contentAlignment = Alignment.Center
                                 ) {
                                     Icon(
-                                        imageVector = Icons.Default.AccountBox,
+                                        imageVector = Icons.Default.AttachMoney,
                                         contentDescription = "Fee",
                                         tint = Color(0xFF6C63FF),
                                         modifier = Modifier.size(16.dp)
@@ -217,7 +228,7 @@ fun TournamentCard(
                                     contentAlignment = Alignment.Center
                                 ) {
                                     Icon(
-                                        imageVector = Icons.Default.AccountBox,
+                                        imageVector = Icons.Default.EmojiEvents,
                                         contentDescription = "Type",
                                         tint = Color(0xFFFF6B6B),
                                         modifier = Modifier.size(16.dp)
@@ -261,7 +272,7 @@ fun TournamentCard(
                                     horizontalArrangement = Arrangement.spacedBy(6.dp)
                                 ) {
                                     Icon(
-                                        imageVector = Icons.Default.AccountBox,
+                                        imageVector = Icons.Default.AppRegistration,
                                         contentDescription = "Register",
                                         tint = Color.White,
                                         modifier = Modifier.size(16.dp)

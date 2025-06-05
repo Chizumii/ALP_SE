@@ -28,8 +28,13 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.AttachMoney
+import androidx.compose.material.icons.filled.CloudUpload
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Description
+import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material.icons.filled.PhotoCamera
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -42,9 +47,10 @@ import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MenuDefaults
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -54,11 +60,18 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -69,18 +82,6 @@ import coil.compose.rememberAsyncImagePainter
 import com.example.alp_se.R
 import com.example.alp_se.uiStates.StringDataStatusUIState
 import com.example.alp_se.viewModels.TournamentViewModel
-import androidx.compose.material3.MenuDefaults
-import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.compose.material3.TextFieldDefaults
-import androidx.compose.ui.draw.rotate
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.style.TextAlign
-import androidx.room.Update
 
 @Composable
 fun CreateTournament(
@@ -261,7 +262,7 @@ fun CreateTournament(
                                     val modelToLoad = if (imageUrl.startsWith("content://")) {
                                         Uri.parse(imageUrl)
                                     } else {
-                                        "http://192.168.253.69:3000${imageUrl}"
+                                        "http://192.168.88.32:3000${imageUrl}"
                                     }
 
                                     Image(
@@ -423,12 +424,17 @@ fun CreateTournament(
                                         context = context
                                     )
                                 } else {
-                                    if(tournamentViewModel.nameTournamentInput.isNullOrEmpty() ||
+                                    if (tournamentViewModel.nameTournamentInput.isNullOrEmpty() ||
                                         tournamentViewModel.descriptionInput.isNullOrEmpty() ||
                                         tournamentViewModel.costInput == 0 ||
                                         tournamentViewModel.lokasiInput.isNullOrEmpty() ||
-                                        tournamentViewModel.typeInput.isNullOrEmpty()){
-                                        Toast.makeText(context, "Error, Please Fill all Inputs", Toast.LENGTH_SHORT).show()
+                                        tournamentViewModel.typeInput.isNullOrEmpty()
+                                    ) {
+                                        Toast.makeText(
+                                            context,
+                                            "Error, Please Fill all Inputs",
+                                            Toast.LENGTH_SHORT
+                                        ).show()
                                     } else {
                                         tournamentViewModel.createTournament(
                                             navController = navController,
@@ -465,14 +471,14 @@ fun CreateTournament(
                                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                                 ) {
                                     Icon(
-                                        imageVector = if(tournamentViewModel.currentTournament != null)
+                                        imageVector = if (tournamentViewModel.currentTournament != null)
                                             Icons.Default.Refresh else Icons.Default.Add,
                                         contentDescription = null,
                                         tint = Color.White,
                                         modifier = Modifier.size(20.dp)
                                     )
                                     Text(
-                                        text = if(tournamentViewModel.currentTournament != null)
+                                        text = if (tournamentViewModel.currentTournament != null)
                                             "Update Tournament" else "Create Tournament",
                                         fontSize = 18.sp,
                                         fontWeight = FontWeight.Bold,
@@ -482,7 +488,7 @@ fun CreateTournament(
                             }
                         }
 
-                        if(tournamentViewModel.currentTournament != null){
+                        if (tournamentViewModel.currentTournament != null) {
                             Button(
                                 onClick = {
                                     tournamentViewModel.deleteTournament(
@@ -682,7 +688,7 @@ fun BestOfDropdown(
                 trailingIcon = {
                     ExposedDropdownMenuDefaults.TrailingIcon(
                         expanded = expanded,
-                        modifier = Modifier.rotate(if (expanded) 180f else 0f)
+//                        modifier = Modifier.rotate(if (expanded) 180f else 0f)
                     )
                 },
                 modifier = Modifier

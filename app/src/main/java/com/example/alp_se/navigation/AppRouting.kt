@@ -10,6 +10,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.material3.NavigationBarItemDefaults
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -158,9 +161,18 @@ fun AppRouting(
     }
 }
 
+
+
+
+
 @Composable
 fun BottomNavigationBar(navController: NavHostController) {
-    val items = listOf(
+    val containerColor = Color(0xFF222222)
+    val selectedItemColor = Color(0xFFFFC107)
+    val unselectedItemColor = Color(0xFF9E9E9E)
+    val selectedIndicatorColor = selectedItemColor.copy(alpha = 0.15f)
+
+    val itemsWithRoutes = listOf(
         Screen.News.route to "News",
         Screen.Home.route to "Home",
         Screen.Tournament.route to "Tournament",
@@ -168,9 +180,10 @@ fun BottomNavigationBar(navController: NavHostController) {
         Screen.Profile.route to "Profile"
     )
 
+
     val icons = listOf(
         R.drawable.baseline_search_24,
-        R.drawable.baseline_home_filled_24, // Added home icon - you may need to add this drawable
+        R.drawable.baseline_home_filled_24,
         R.drawable.champion,
         R.drawable.baseline_groups_24,
         R.drawable.baseline_person_24
@@ -179,20 +192,20 @@ fun BottomNavigationBar(navController: NavHostController) {
     val currentBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = currentBackStackEntry?.destination?.route
 
-    NavigationBar(containerColor = Color(0xFF222222)) {
-        items.forEachIndexed { index, (route, label) ->
+    NavigationBar(
+        containerColor = containerColor,
+    ) {
+        itemsWithRoutes.forEachIndexed { index, (route, label) ->
+            val isSelected = currentRoute == route
             NavigationBarItem(
-                selected = currentRoute == route,
+                selected = isSelected,
                 onClick = {
                     if (currentRoute != route) {
                         navController.navigate(route) {
-                            // Pop up to the start destination to avoid building up a large stack
                             popUpTo(navController.graph.startDestinationId) {
                                 saveState = true
                             }
-                            // Avoid multiple copies of the same destination
                             launchSingleTop = true
-                            // Restore state when reselecting a previously selected item
                             restoreState = true
                         }
                     }
@@ -200,16 +213,24 @@ fun BottomNavigationBar(navController: NavHostController) {
                 icon = {
                     Icon(
                         painter = painterResource(id = icons[index]),
-                        contentDescription = label,
-                        tint = if (currentRoute == route) Color(0xFFFFC107) else Color(0xFF6B90B6)
+                        contentDescription = label
                     )
                 },
                 label = {
                     Text(
                         text = label,
-                        color = if (currentRoute == route) Color(0xFFFFC107) else Color(0xFF6B90B6)
+                        fontWeight = if (isSelected) FontWeight.Medium else FontWeight.Normal,
+                        fontSize = 10.sp
                     )
-                }
+                },
+
+                colors = NavigationBarItemDefaults.colors(
+                    selectedIconColor = selectedItemColor,
+                    selectedTextColor = selectedItemColor,
+                    unselectedIconColor = unselectedItemColor,
+                    unselectedTextColor = unselectedItemColor,
+                    indicatorColor = selectedIndicatorColor
+                )
             )
         }
     }

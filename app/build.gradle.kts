@@ -75,6 +75,7 @@ dependencies {
     implementation(libs.converter.gson)
     implementation(libs.logging.interceptor)
     implementation (libs.coil.compose)
+    implementation ("androidx.compose.material:material-icons-extended:1.4.3")
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.6")
     implementation("androidx.navigation:navigation-compose:2.7.4")
     implementation("androidx.datastore:datastore-preferences:1.0.0")

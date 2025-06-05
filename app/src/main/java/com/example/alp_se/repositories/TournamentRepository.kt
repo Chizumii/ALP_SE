@@ -4,7 +4,6 @@ import android.content.Context
 import android.net.Uri
 import com.example.alp_se.models.GeneralResponseModel
 import com.example.alp_se.models.RegistrationStatusResponse
-import com.example.alp_se.models.TournamentResponse
 import com.example.alp_se.models.listTournament
 import com.example.alp_se.services.TournamentServiceApi
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
