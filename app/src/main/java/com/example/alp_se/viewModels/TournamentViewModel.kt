@@ -297,64 +297,58 @@ class TournamentViewModel(
     ) {
         viewModelScope.launch {
             try {
-                // If the imageInput is a URL (from backend) or empty, we don't convert it to Uri
-                // Only convert to Uri if it's a new image selected from gallery (content:// URI)
-                val imageUri =
-                    if (imageInput.startsWith("http://192.168.88.32:3000/")) Uri.parse(imageInput) else null
+
+                val imageUri: Uri? = if (imageInput.startsWith("content://")) {
+                    Uri.parse(imageInput)
+                } else {
+                    null
+                }
 
                 val call = tournamentRepository.updateTournament(
                     context = context,
                     tournamentId = tournamentId,
                     nama_tournament = nameTournamentInput,
                     description = descriptionInput,
-                    imageUri = imageUri, // Pass null if no new image selected
+                    imageUri = imageUri, // Kirim null jika tidak ada gambar baru, atau kirim Uri baru jika ada
                     tipe = typeInput,
                     biaya = costInput,
                     lokasi = lokasiInput,
                     token = token
                 )
 
-                val response = suspendCancellableCoroutine { continuation ->
-                    call.enqueue(object : Callback<GeneralResponseModel> {
-                        override fun onResponse(
-                            call: Call<GeneralResponseModel>,
-                            response: Response<GeneralResponseModel>
-                        ) {
-                            if (response.isSuccessful) {
-                                currentTournament = null
-                                initializeForEdit(null)
-                                navController.navigate("Tournament") {
-                                    popUpTo("tournamentCreate") { inclusive = true }
-                                }
-                            } else {
-                                submissionStatus = StringDataStatusUIState.Failed(
-                                    response.errorBody()?.string() ?: "Failed to update tournament."
-                                )
+                call.enqueue(object : Callback<GeneralResponseModel> {
+                    override fun onResponse(
+                        call: Call<GeneralResponseModel>,
+                        response: Response<GeneralResponseModel>
+                    ) {
+                        if (response.isSuccessful) {
+                            Log.d("TournamentViewModel", "Update successful")
+                            // Reset state setelah berhasil
+                            currentTournament = null
+                            initializeForEdit(null)
+                            // Kembali ke halaman utama turnamen
+                            navController.navigate("Tournament") {
+                                // Hapus halaman create/edit dari back stack
+                                popUpTo("tournamentCreate") { inclusive = true }
                             }
-                            continuation.resume(response)
+                        } else {
+                            val errorBody = response.errorBody()?.string() ?: "Failed to update tournament."
+                            Log.e("TournamentViewModel", "Update failed: $errorBody")
+                            submissionStatus = StringDataStatusUIState.Failed(errorBody)
                         }
-
-                        override fun onFailure(call: Call<GeneralResponseModel>, t: Throwable) {
-                            submissionStatus = StringDataStatusUIState.Failed(t.localizedMessage)
-                            continuation.resumeWith(Result.failure(t))
-                        }
-                    })
-                    continuation.invokeOnCancellation {
-                        call.cancel()
                     }
-                }
 
-                if (response.isSuccessful) {
-                    navController.navigate("Tournament") {
-//                        popUpTo("CreateTournament") { inclusive = true } // Or popUpTo TournamentDetail if you have one
+                    override fun onFailure(call: Call<GeneralResponseModel>, t: Throwable) {
+                        val errorMessage = t.localizedMessage ?: "Network error"
+                        Log.e("TournamentViewModel", "Update failure: $errorMessage", t)
+                        submissionStatus = StringDataStatusUIState.Failed(errorMessage)
                     }
-                }
-            } catch (error: IOException) {
-                submissionStatus = StringDataStatusUIState.Failed(error.localizedMessage)
-            } catch (e: IllegalArgumentException) {
-                submissionStatus = StringDataStatusUIState.Failed(e.localizedMessage)
-            } catch (e: SecurityException) {
-                submissionStatus = StringDataStatusUIState.Failed(e.localizedMessage)
+                })
+
+            } catch (error: Exception) {
+                val errorMessage = error.localizedMessage ?: "An unexpected error occurred"
+                Log.e("TournamentViewModel", "Update exception: $errorMessage", error)
+                submissionStatus = StringDataStatusUIState.Failed(errorMessage)
             }
         }
     }
