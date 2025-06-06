@@ -5,7 +5,6 @@ data class listTournament(
     val data: List<TournamentResponse>
 )
 
-// Data class untuk respons tournament
 data class TournamentResponse(
     val TournamentID: Int = 0,
     val nama_tournament: String = "",
