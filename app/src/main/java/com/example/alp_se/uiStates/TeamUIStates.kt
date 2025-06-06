@@ -24,14 +24,8 @@ data class TeamUIState(
         get() = if (searchQuery.isBlank()) teams else filteredTeams
 
     val showEmptyState: Boolean
-        get() = teams.isEmpty() && !isLoading && !isSearching && error == null // Consider !isSearching too
+        get() = teams.isEmpty() && !isLoading && !isSearching && error == null
 
     val showNoSearchResults: Boolean
         get() = searchQuery.isNotBlank() && filteredTeams.isEmpty() && !isLoading && !isSearching && error == null
-
-    val hasTeams: Boolean
-        get() = teams.isNotEmpty()
-
-    val hasFilteredResults: Boolean
-        get() = filteredTeams.isNotEmpty()
 }

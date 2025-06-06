@@ -54,19 +54,15 @@ import com.example.alp_se.models.TournamentResponse
 import com.example.alp_se.navigation.Screen
 import com.example.alp_se.viewModels.TournamentViewModel
 
-// Re-using the consistent theme elements
 val pageBackgroundBrushDetail = Brush.verticalGradient(
     colors = listOf(Color(0xFF0F0F23), Color(0xFF1A1A2E), Color(0xFF16213E))
 )
-
 val headerBackgroundBrushDetail = Brush.horizontalGradient(
     colors = listOf(Color(0xFF6C63FF), Color(0xFF9C88FF), Color(0xFF6C63FF))
 )
-
 val primaryAccentColorDetail = Color(0xFF6C63FF)
 val secondaryTextColorDetail = Color(0xFFB0B3B8)
-val successColorDetail = Color(0xFF4CAF50) // For registration banner
-
+val successColorDetail = Color(0xFF4CAF50)
 @Composable
 fun TournamentDetailView(
     tournament: TournamentResponse,

@@ -178,14 +178,6 @@
             }
         }
 
-        fun selectTeam(team: Team) {
-            _uiState.value = _uiState.value.copy(selectedTeam = team)
-        }
-
-        fun clearSelectedTeam() {
-            _uiState.value = _uiState.value.copy(selectedTeam = null)
-        }
-
         fun clearError() {
             _uiState.value = _uiState.value.copy(error = null)
         }
@@ -196,10 +188,6 @@
                 updateSuccess = false,
                 deleteSuccess = false
             )
-        }
-
-        fun refresh() {
-            loadTeams()
         }
 
         fun getImageUrl(imagePath: String): String {

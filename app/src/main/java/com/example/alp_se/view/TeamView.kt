@@ -74,7 +74,6 @@ import com.example.alp_se.models.Team
 import com.example.alp_se.navigation.Screen
 import com.example.alp_se.viewModels.TeamViewModel
 
-// Theme Elements (copied for this file, ideally in a separate Theme.kt)
 val pageBackgroundBrushTeamList = Brush.verticalGradient(
     colors = listOf(Color(0xFF0F0F23), Color(0xFF1A1A2E), Color(0xFF16213E))
 )
@@ -88,7 +87,6 @@ val textFieldBackgroundColorTeamList = Color(0xFF2A2A3D)
 val errorColorTeamList = Color(0xFFE53935)
 val defaultCornerShapeTeamList = RoundedCornerShape(12.dp)
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TeamView(
     navController: NavController,
@@ -466,41 +464,6 @@ fun ErrorState(
             ) {
                 Text("Retry", color = Color.White)
             }
-        }
-    }
-}
-
-@Composable
-fun EmptyState() {
-    Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
-    ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
-        ) {
-            Icon(
-                imageVector = Icons.Filled.Inbox, // Example Icon
-                contentDescription = "No teams found",
-                tint = Color.Gray,
-                modifier = Modifier.size(72.dp)
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-            Text(
-                text = "No Teams Yet",
-                color = Color.White,
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Bold
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = "Tap the '+' button to create your first team!",
-                color = Color.Gray,
-                fontSize = 15.sp,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.padding(horizontal = 32.dp)
-            )
         }
     }
 }

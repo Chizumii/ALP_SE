@@ -88,14 +88,6 @@ class TournamentViewModel(
         imageInput = input
     }
 
-    fun updateTypeInput(input: String) {
-        typeInput = input
-    }
-
-    fun updateCostInput(input: Int) {
-        costInput = input
-    }
-
     fun updateLokasiInput(input: String) {
         lokasiInput = input
     }
@@ -106,26 +98,6 @@ class TournamentViewModel(
                 val application = (this[APPLICATION_KEY] as EshypeApplication)
                 val tournamentRepository = application.container.tournamentRepository
                 TournamentViewModel(tournamentRepository)
-            }
-        }
-    }
-
-    var tournamentList by mutableStateOf(listOf<Screen.Tournament>())
-        private set
-
-    fun updateTournamentList(newList: List<Screen.Tournament>) {
-        tournamentList = newList
-    }
-
-    fun getRole(
-        role: String,
-    ) {
-        viewModelScope.launch {
-            try {
-
-            }catch (e: Exception){
-                Log.e("TournamentPageViewModel", "Error fetching user: ${e.message}")
-                // Handle network or unexpected errors
             }
         }
     }
@@ -193,9 +165,6 @@ class TournamentViewModel(
         }
     }
 
-    fun getRegistrationStatus(tournamentId: Int): Boolean {
-        return _registrationStatusMap.value[tournamentId] ?: false
-    }
 
     fun checkRegistrationStatus(tournamentId: Int, token: String) {
         viewModelScope.launch {
@@ -222,46 +191,7 @@ class TournamentViewModel(
         }
     }
 
-    fun registerTeam(
-        tournamentId: Int,
-        token: String,
-        onSuccess: () -> Unit = {},
-        onError: (String) -> Unit = {}
-    ) {
-        viewModelScope.launch {
-            try {
-                registrationLoading = true
-                val response = tournamentRepository.registerTeam(tournamentId, token)
-
-                if (response.isSuccessful) {
-                    // Update local state
-                    val currentMap = _registrationStatusMap.value.toMutableMap()
-                    currentMap[tournamentId] = true
-                    _registrationStatusMap.value = currentMap
-
-                    Log.d("TournamentViewModel", "Successfully registered for tournament $tournamentId")
-                    onSuccess()
-                } else {
-                    val errorMessage = try {
-                        val errorBody = response.errorBody()?.string()
-                        val errorModel = Gson().fromJson(errorBody, ErrorModel::class.java)
-                        errorModel.errors ?: "Failed to register for tournament"
-                    } catch (e: Exception) {
-                        "Failed to register for tournament"
-                    }
-                    Log.e("TournamentViewModel", "Registration failed: $errorMessage")
-                    onError(errorMessage)
-                }
-            } catch (e: Exception) {
-                val errorMessage = e.localizedMessage ?: "Network error occurred"
-                Log.e("TournamentViewModel", "Error registering for tournament: $errorMessage")
-                onError(errorMessage)
-            } finally {
-                registrationLoading = false
-            }
-        }
-    }
-
+    // ADD THIS NEW METHOD that your TournamentTeamSubmit screen is calling
     fun registerTeamWithId(
         tournamentId: Int,
         teamId: Int,
@@ -302,7 +232,6 @@ class TournamentViewModel(
             }
         }
     }
-
 
 
     fun createTournament(
@@ -368,8 +297,10 @@ class TournamentViewModel(
     ) {
         viewModelScope.launch {
             try {
+                // If the imageInput is a URL (from backend) or empty, we don't convert it to Uri
+                // Only convert to Uri if it's a new image selected from gallery (content:// URI)
                 val imageUri =
-                    if (imageInput.startsWith("http://192.168.88.32:3000")) Uri.parse(imageInput) else null
+                    if (imageInput.startsWith("content: http://192.168.88.32:3000/")) Uri.parse(imageInput) else null
 
                 val call = tournamentRepository.updateTournament(
                     context = context,
@@ -472,7 +403,6 @@ class TournamentViewModel(
 
                 if (response.isSuccessful) {
                     navController.navigate("Tournament") {
-//                        popUpTo("CreateTournament") { inclusive = true } // Or popUpTo TournamentDetail if you have one
                     }
                 }
             } catch (error: IOException) {
