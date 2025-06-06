@@ -38,8 +38,6 @@ import kotlin.math.log
 class TournamentViewModel(
     private val tournamentRepository: TournamentRepository
 ) : ViewModel() {
-    var dataStatus: TournamentDataStatusUIState by mutableStateOf(TournamentDataStatusUIState.Start)
-        private set
 
     var submissionStatus: StringDataStatusUIState by mutableStateOf(StringDataStatusUIState.Start)
         private set
@@ -195,7 +193,6 @@ class TournamentViewModel(
         }
     }
 
-    // Registration Status Functions
     fun getRegistrationStatus(tournamentId: Int): Boolean {
         return _registrationStatusMap.value[tournamentId] ?: false
     }
@@ -265,7 +262,6 @@ class TournamentViewModel(
         }
     }
 
-    // ADD THIS NEW METHOD that your TournamentTeamSubmit screen is calling
     fun registerTeamWithId(
         tournamentId: Int,
         teamId: Int,
@@ -307,45 +303,7 @@ class TournamentViewModel(
         }
     }
 
-    fun unregisterTeam(
-        tournamentId: Int,
-        token: String,
-        onSuccess: () -> Unit = {},
-        onError: (String) -> Unit = {}
-    ) {
-        viewModelScope.launch {
-            try {
-                registrationLoading = true
-                val response = tournamentRepository.unregisterTeam(tournamentId, token)
 
-                if (response.isSuccessful) {
-                    // Update local state
-                    val currentMap = _registrationStatusMap.value.toMutableMap()
-                    currentMap[tournamentId] = false
-                    _registrationStatusMap.value = currentMap
-
-                    Log.d("TournamentViewModel", "Successfully unregistered from tournament $tournamentId")
-                    onSuccess()
-                } else {
-                    val errorMessage = try {
-                        val errorBody = response.errorBody()?.string()
-                        val errorModel = Gson().fromJson(errorBody, ErrorModel::class.java)
-                        errorModel.errors ?: "Failed to unregister from tournament"
-                    } catch (e: Exception) {
-                        "Failed to unregister from tournament"
-                    }
-                    Log.e("TournamentViewModel", "Unregistration failed: $errorMessage")
-                    onError(errorMessage)
-                }
-            } catch (e: Exception) {
-                val errorMessage = e.localizedMessage ?: "Network error occurred"
-                Log.e("TournamentViewModel", "Error unregistering from tournament: $errorMessage")
-                onError(errorMessage)
-            } finally {
-                registrationLoading = false
-            }
-        }
-    }
 
     fun createTournament(
         navController: NavController,
@@ -410,10 +368,8 @@ class TournamentViewModel(
     ) {
         viewModelScope.launch {
             try {
-                // If the imageInput is a URL (from backend) or empty, we don't convert it to Uri
-                // Only convert to Uri if it's a new image selected from gallery (content:// URI)
                 val imageUri =
-                    if (imageInput.startsWith("content://")) Uri.parse(imageInput) else null
+                    if (imageInput.startsWith("http://192.168.88.32:3000")) Uri.parse(imageInput) else null
 
                 val call = tournamentRepository.updateTournament(
                     context = context,

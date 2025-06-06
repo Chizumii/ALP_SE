@@ -55,7 +55,7 @@ import com.example.alp_se.view.templates.TournamentCard
 import com.example.alp_se.viewModels.TournamentViewModel
 
 @Composable
-fun TournamentView(
+fun TournamentListView(
     navController: NavController,
     tournamentViewModel: TournamentViewModel,
     token: String

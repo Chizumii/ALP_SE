@@ -70,7 +70,7 @@ fun AppRouting(
             }
 
             composable(Screen.Tournament.route) {
-                TournamentView(navController, tournamentViewModel, token)
+                TournamentListView(navController, tournamentViewModel, token)
             }
 
             composable(Screen.TournamentCreate.route) {
