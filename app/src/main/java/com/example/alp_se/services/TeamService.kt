@@ -52,9 +52,9 @@ class TeamService(
 
 ) {
     companion object {
-        private const val BASE_URL = "http://192.168.253.69:3000/"
+        private const val BASE_URL = "http://192.168.88.32:3000/"
     }
-    val token = "7a1ce296-ab8e-40ce-bce8-add67c22d965"
+    val token = "9a4fabf7-0e68-4a7e-9a71-cb8abaa6af23"
     suspend fun createTeam(namatim: String, imageUri: Uri, context: Context): Result<Team> {
         return try {
             val namatimBody = namatim.toRequestBody("text/plain".toMediaTypeOrNull())
