@@ -300,7 +300,7 @@ class TournamentViewModel(
                 // If the imageInput is a URL (from backend) or empty, we don't convert it to Uri
                 // Only convert to Uri if it's a new image selected from gallery (content:// URI)
                 val imageUri =
-                    if (imageInput.startsWith("content: http://192.168.88.32:3000/")) Uri.parse(imageInput) else null
+                    if (imageInput.startsWith("http://192.168.88.32:3000/")) Uri.parse(imageInput) else null
 
                 val call = tournamentRepository.updateTournament(
                     context = context,
