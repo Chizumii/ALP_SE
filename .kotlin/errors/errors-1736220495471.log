@@ -1,5 +1,5 @@
 kotlin version: 2.0.0
-error message: java.io.FileNotFoundException: C:\Users\ASUS\AndroidStudioProjects\ALP_VP_JOZZ\app\src\main\java\com\example\alp_vp_jozz\view\Eshype.kt (The system cannot find the file specified)
+error message: java.io.FileNotFoundException: C:\Users\ASUS\AndroidStudioProjects\ALP_SE\app\src\main\java\com\example\alp_se\view\Eshype.kt (The system cannot find the file specified)
 	at java.base/java.io.FileInputStream.open0(Native Method)
 	at java.base/java.io.FileInputStream.open(Unknown Source)
 	at java.base/java.io.FileInputStream.<init>(Unknown Source)

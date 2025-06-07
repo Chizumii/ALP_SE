@@ -20,7 +20,6 @@ import com.example.alp_se.models.GeneralResponseModel
 import com.example.alp_se.models.TournamentResponse
 import com.example.alp_se.navigation.Screen
 import com.example.alp_se.repositories.TournamentRepository
-import com.example.alp_se.uiStates.StringDataStatusUIState
 import com.example.alp_se.uiStates.TournamentDataStatusUIState
 import com.google.gson.Gson
 import kotlinx.coroutines.flow.MutableStateFlow

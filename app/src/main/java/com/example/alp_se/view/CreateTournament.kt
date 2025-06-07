@@ -80,7 +80,6 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import coil.compose.rememberAsyncImagePainter
 import com.example.alp_se.R
-import com.example.alp_se.uiStates.StringDataStatusUIState
 import com.example.alp_se.uiStates.TournamentDataStatusUIState
 import com.example.alp_se.viewModels.TournamentViewModel
 
