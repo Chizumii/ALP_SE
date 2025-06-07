@@ -81,6 +81,7 @@ import androidx.navigation.compose.rememberNavController
 import coil.compose.rememberAsyncImagePainter
 import com.example.alp_se.R
 import com.example.alp_se.uiStates.StringDataStatusUIState
+import com.example.alp_se.uiStates.TournamentDataStatusUIState
 import com.example.alp_se.viewModels.TournamentViewModel
 
 @Composable
@@ -108,8 +109,8 @@ fun CreateTournament(
 
     LaunchedEffect(tournamentViewModel.submissionStatus) {
         val dataStatus = tournamentViewModel.submissionStatus
-        if (dataStatus is StringDataStatusUIState.Success) {
-            Toast.makeText(context, dataStatus.data, Toast.LENGTH_SHORT).show()
+        if (dataStatus is TournamentDataStatusUIState.Success) {
+            Toast.makeText(context, "Fetched ${dataStatus.data.size} tournaments", Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -583,7 +584,6 @@ private fun CustomTextField(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DoubleTextField(
     value: Int,

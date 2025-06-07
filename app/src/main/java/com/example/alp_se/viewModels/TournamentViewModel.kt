@@ -39,7 +39,7 @@ class TournamentViewModel(
     private val tournamentRepository: TournamentRepository
 ) : ViewModel() {
 
-    var submissionStatus: StringDataStatusUIState by mutableStateOf(StringDataStatusUIState.Start)
+    var submissionStatus: TournamentDataStatusUIState by mutableStateOf(TournamentDataStatusUIState.Start)
         private set
 
     var nameTournamentInput by mutableStateOf("")
@@ -58,7 +58,6 @@ class TournamentViewModel(
 
     var currentTournament: TournamentResponse? by mutableStateOf(null)
 
-    // Registration status management
     private val _registrationStatusMap = MutableStateFlow<Map<Int, Boolean>>(emptyMap())
     val registrationStatusMap: StateFlow<Map<Int, Boolean>> = _registrationStatusMap.asStateFlow()
 
@@ -272,26 +271,26 @@ class TournamentViewModel(
                                 ErrorModel::class.java
                             )
                             Log.e("API Response", "Error: ${response.errorBody()}")
-                            submissionStatus = StringDataStatusUIState.Failed(errorMessage.errors)
+                            submissionStatus = TournamentDataStatusUIState.Failed(errorMessage.errors)
                         }
                     }
 
                     override fun onFailure(call: Call<GeneralResponseModel>, t: Throwable) {
-                        submissionStatus = StringDataStatusUIState.Failed(t.localizedMessage)
+                        submissionStatus = TournamentDataStatusUIState.Failed(t.localizedMessage)
                     }
                 })
 
 
 
             } catch (error: IOException) {
-                submissionStatus = StringDataStatusUIState.Failed(error.localizedMessage)
+                submissionStatus = TournamentDataStatusUIState.Failed(error.localizedMessage)
             }
         }
     }
 
     fun updateTournament(
         navController: NavController,
-        tournamentId: Int, // The ID of the tournament to update
+        tournamentId: Int,
         token: String,
         context: Context
     ) {
@@ -334,21 +333,21 @@ class TournamentViewModel(
                         } else {
                             val errorBody = response.errorBody()?.string() ?: "Failed to update tournament."
                             Log.e("TournamentViewModel", "Update failed: $errorBody")
-                            submissionStatus = StringDataStatusUIState.Failed(errorBody)
+                            submissionStatus = TournamentDataStatusUIState.Failed(errorBody)
                         }
                     }
 
                     override fun onFailure(call: Call<GeneralResponseModel>, t: Throwable) {
                         val errorMessage = t.localizedMessage ?: "Network error"
                         Log.e("TournamentViewModel", "Update failure: $errorMessage", t)
-                        submissionStatus = StringDataStatusUIState.Failed(errorMessage)
+                        submissionStatus = TournamentDataStatusUIState.Failed(errorMessage)
                     }
                 })
 
             } catch (error: Exception) {
                 val errorMessage = error.localizedMessage ?: "An unexpected error occurred"
                 Log.e("TournamentViewModel", "Update exception: $errorMessage", error)
-                submissionStatus = StringDataStatusUIState.Failed(errorMessage)
+                submissionStatus = TournamentDataStatusUIState.Failed(errorMessage)
             }
         }
     }
@@ -378,7 +377,7 @@ class TournamentViewModel(
                                     popUpTo("tournamentCreate") { inclusive = true }
                                 }
                             } else {
-                                submissionStatus = StringDataStatusUIState.Failed(
+                                submissionStatus = TournamentDataStatusUIState.Failed(
                                     response.errorBody()?.string() ?: "Failed to update tournament."
                                 )
                             }
@@ -386,7 +385,7 @@ class TournamentViewModel(
                         }
 
                         override fun onFailure(call: Call<GeneralResponseModel>, t: Throwable) {
-                            submissionStatus = StringDataStatusUIState.Failed(t.localizedMessage)
+                            submissionStatus = TournamentDataStatusUIState.Failed(t.localizedMessage)
                             continuation.resumeWith(Result.failure(t))
                         }
                     })
