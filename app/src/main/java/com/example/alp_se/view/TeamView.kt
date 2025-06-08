@@ -2,77 +2,36 @@ package com.example.alp_se.view
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Clear
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.ErrorOutline
-import androidx.compose.material.icons.filled.Inbox
-import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.SearchOff
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.example.alp_se.R
 import com.example.alp_se.models.Team
 import com.example.alp_se.navigation.Screen
+import com.example.alp_se.uiStates.TeamDataStatusUIState
 import com.example.alp_se.viewModels.TeamViewModel
+
 
 val pageBackgroundBrushTeamList = Brush.verticalGradient(
     colors = listOf(Color(0xFF0F0F23), Color(0xFF1A1A2E), Color(0xFF16213E))
@@ -90,25 +49,26 @@ val defaultCornerShapeTeamList = RoundedCornerShape(12.dp)
 @Composable
 fun TeamView(
     navController: NavController,
-    teamViewModel: TeamViewModel = viewModel()
+    teamViewModel: TeamViewModel
 ) {
-    val uiState by teamViewModel.uiState.collectAsState()
+    val uiState = teamViewModel.uiState
+    val teams by teamViewModel.teamList.collectAsState()
     var showDeleteDialog by remember { mutableStateOf<Team?>(null) }
+    var searchQuery by remember { mutableStateOf("") }
 
-    LaunchedEffect(Unit) {
-        teamViewModel.loadTeams()
+    val token = "7a1ce296-ab8e-40ce-bce8-add67c22d965"
+
+    LaunchedEffect(navController.currentBackStackEntry) {
+        teamViewModel.loadTeams(token)
     }
 
-    LaunchedEffect(uiState.createSuccess, uiState.updateSuccess, uiState.deleteSuccess) {
-        if (uiState.createSuccess || uiState.updateSuccess || uiState.deleteSuccess) {
-            teamViewModel.clearSuccessFlags()
-            teamViewModel.loadTeams()
-        }
-    }
-
-    uiState.error?.let { error ->
-        LaunchedEffect(error) {
-            // Snackbar can be shown here if needed for non-critical errors
+    val filteredTeams = remember(searchQuery, teams) {
+        if (searchQuery.isBlank()) {
+            teams
+        } else {
+            teams.filter {
+                it.namatim.contains(searchQuery, ignoreCase = true)
+            }
         }
     }
 
@@ -116,45 +76,46 @@ fun TeamView(
         .fillMaxSize()
         .background(pageBackgroundBrushTeamList)) {
         Column(modifier = Modifier.fillMaxSize()) {
-            TeamListHeader(
-                onRefresh = {
-                    teamViewModel.clearError()
-                    teamViewModel.loadTeams()
-                }
-            )
-            TeamListSearchBar(
-                searchQuery = uiState.searchQuery,
-                onSearchQueryChange = { query -> teamViewModel.searchTeams(query) },
-                isSearching = uiState.isSearching
+            TeamListHeader(onRefresh = { teamViewModel.loadTeams(token) })
+
+            OutlinedTextField(
+                value = searchQuery,
+                onValueChange = { searchQuery = it },
+                placeholder = { Text("Search teams...", color = secondaryTextColorTeamList.copy(alpha = 0.7f)) },
+                leadingIcon = { Icon(Icons.Default.Search, "Search", tint = secondaryTextColorTeamList) },
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedTextColor = Color.White, unfocusedTextColor = Color.White,
+                    focusedContainerColor = textFieldBackgroundColorTeamList, unfocusedContainerColor = textFieldBackgroundColorTeamList,
+                    cursorColor = primaryAppColorTeamList, focusedBorderColor = primaryAppColorTeamList,
+                    unfocusedBorderColor = cardBackgroundColorTeamList,
+                ),
+                shape = defaultCornerShapeTeamList
             )
 
-            Box(modifier = Modifier
-                .weight(1f)
-                .padding(horizontal = 16.dp)) {
-                when {
-                    uiState.isLoading -> LoadingStateTeamList()
-                    uiState.error != null && uiState.displayTeams.isEmpty() -> ErrorStateTeamList(
-                        error = uiState.error!!,
-                        onRetry = {
-                            teamViewModel.clearError()
-                            teamViewModel.loadTeams()
-                        }
+            Box(modifier = Modifier.weight(1f).padding(horizontal = 16.dp)) {
+                when (uiState) {
+                    is TeamDataStatusUIState.Loading -> LoadingStateTeamList()
+                    is TeamDataStatusUIState.Failed -> ErrorStateTeamList(
+                        error = uiState.errorMessage,
+                        onRetry = { teamViewModel.loadTeams(token) }
                     )
-
-                    uiState.showEmptyState -> EmptyStateTeamList()
-                    uiState.showNoSearchResults -> NoSearchResultsStateTeamList(searchQuery = uiState.searchQuery)
-                    else -> TeamListBody(
-                        teams = uiState.displayTeams,
-                        onEditClick = { team ->
-                            navController.navigate(
-                                Screen.TeamEdit.createRoute(
-                                    team.TeamId
-                                )
+                    is TeamDataStatusUIState.Success -> {
+                        if (filteredTeams.isEmpty()) {
+                            if (searchQuery.isNotBlank()) NoSearchResultsStateTeamList(searchQuery)
+                            else EmptyStateTeamList()
+                        } else {
+                            TeamListBody(
+                                teams = filteredTeams,
+                                onEditClick = { team ->
+                                    teamViewModel.initializeForEdit(team)
+                                    navController.navigate(Screen.TeamEdit.createRoute(team.TeamId))
+                                },
+                                onDeleteClick = { team -> showDeleteDialog = team }
                             )
-                        },
-                        onDeleteClick = { team -> showDeleteDialog = team },
-                        getImageUrl = { imagePath -> teamViewModel.getImageUrl(imagePath) }
-                    )
+                        }
+                    }
+                    is TeamDataStatusUIState.Start -> {}
                 }
             }
         }
@@ -164,9 +125,7 @@ fun TeamView(
             containerColor = primaryAppColorTeamList,
             contentColor = Color.White,
             shape = CircleShape,
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .padding(16.dp)
+            modifier = Modifier.align(Alignment.BottomEnd).padding(16.dp)
         ) {
             Icon(imageVector = Icons.Default.Add, contentDescription = "Create Team")
         }
@@ -176,29 +135,41 @@ fun TeamView(
         AlertDialog(
             onDismissRequest = { showDeleteDialog = null },
             title = { Text("Delete Team", color = Color.White, fontWeight = FontWeight.Bold) },
-            text = {
-                Text(
-                    "Are you sure you want to delete ${team.namatim}?",
-                    color = secondaryTextColorTeamList
-                )
-            },
+            text = { Text("Are you sure you want to delete ${team.namatim}?", color = secondaryTextColorTeamList) },
             containerColor = cardBackgroundColorTeamList,
             shape = defaultCornerShapeTeamList,
             confirmButton = {
                 TextButton(onClick = {
-                    teamViewModel.deleteTeam(team.TeamId)
+                    teamViewModel.deleteTeam(team.TeamId, token)
                     showDeleteDialog = null
                 }) { Text("Delete", color = errorColorTeamList, fontWeight = FontWeight.Bold) }
             },
             dismissButton = {
-                TextButton(onClick = { showDeleteDialog = null }) {
-                    Text(
-                        "Cancel",
-                        color = primaryAppColorTeamList
-                    )
-                }
+                TextButton(onClick = { showDeleteDialog = null }) { Text("Cancel", color = primaryAppColorTeamList) }
             }
         )
+    }
+}
+
+@Composable
+fun TeamListBody(
+    teams: List<Team>,
+    onEditClick: (Team) -> Unit,
+    onDeleteClick: (Team) -> Unit
+) {
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(vertical = 8.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        items(teams, key = { it.TeamId }) { team ->
+            TeamCardItem(
+                team = team,
+                onEditClick = { onEditClick(team) },
+                onDeleteClick = { onDeleteClick(team) },
+                imageUrl = "http://192.168.81.69:3000/${team.image}"
+            )
+        }
     }
 }
 
@@ -209,7 +180,7 @@ fun TeamListHeader(onRefresh: () -> Unit) {
             .fillMaxWidth()
             .background(headerBackgroundBrushTeamList)
             .padding(vertical = 10.dp, horizontal = 16.dp)
-            .zIndex(1f), // Ensure header is on top if there's any overlap potential
+            .zIndex(1f),
         contentAlignment = Alignment.Center
     ) {
         Row(
@@ -217,7 +188,7 @@ fun TeamListHeader(onRefresh: () -> Unit) {
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Image( // Using the example's logo resource
+            Image(
                 painter = painterResource(R.drawable.community_removebg_preview),
                 contentDescription = "App Logo",
                 modifier = Modifier
@@ -250,87 +221,6 @@ fun TeamListHeader(onRefresh: () -> Unit) {
 }
 
 @Composable
-fun TeamListSearchBar(
-    searchQuery: String,
-    onSearchQueryChange: (String) -> Unit,
-    isSearching: Boolean
-) {
-    val keyboardController = LocalSoftwareKeyboardController.current
-    OutlinedTextField(
-        value = searchQuery,
-        onValueChange = onSearchQueryChange,
-        placeholder = {
-            Text(
-                "Search teams...",
-                color = secondaryTextColorTeamList.copy(alpha = 0.7f)
-            )
-        },
-        leadingIcon = {
-            if (isSearching) CircularProgressIndicator(
-                modifier = Modifier.size(20.dp),
-                color = primaryAppColorTeamList,
-                strokeWidth = 2.dp
-            )
-            else Icon(
-                Icons.Default.Search,
-                contentDescription = "Search Icon",
-                tint = secondaryTextColorTeamList
-            )
-        },
-        trailingIcon = {
-            if (searchQuery.isNotEmpty()) {
-                IconButton(onClick = { onSearchQueryChange("") }) {
-                    Icon(
-                        Icons.Default.Clear,
-                        contentDescription = "Clear Search",
-                        tint = secondaryTextColorTeamList
-                    )
-                }
-            }
-        },
-        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-        keyboardActions = KeyboardActions(onSearch = { keyboardController?.hide() }),
-        colors = OutlinedTextFieldDefaults.colors(
-            focusedTextColor = Color.White,
-            unfocusedTextColor = Color.White,
-            focusedContainerColor = textFieldBackgroundColorTeamList,
-            unfocusedContainerColor = textFieldBackgroundColorTeamList,
-            disabledContainerColor = textFieldBackgroundColorTeamList,
-            cursorColor = primaryAppColorTeamList,
-            focusedBorderColor = primaryAppColorTeamList,
-            unfocusedBorderColor = cardBackgroundColorTeamList, // Or a subtle gray
-        ),
-        shape = defaultCornerShapeTeamList, // Consistent rounded corners
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 12.dp)
-    )
-}
-
-@Composable
-fun TeamListBody(
-    teams: List<Team>,
-    onEditClick: (Team) -> Unit,
-    onDeleteClick: (Team) -> Unit,
-    getImageUrl: (String) -> String
-) {
-    LazyColumn(
-        modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(vertical = 8.dp), // Horizontal padding is on the parent Box
-        verticalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        items(teams, key = { it.TeamId }) { team ->
-            TeamCardItem(
-                team = team,
-                onEditClick = { onEditClick(team) },
-                onDeleteClick = { onDeleteClick(team) },
-                imageUrl = getImageUrl(team.image)
-            )
-        }
-    }
-}
-
-@Composable
 fun TeamCardItem(
     team: Team,
     onEditClick: () -> Unit,
@@ -351,8 +241,7 @@ fun TeamCardItem(
             Card(shape = RoundedCornerShape(8.dp), modifier = Modifier.size(64.dp)) {
                 AsyncImage(
                     model = ImageRequest.Builder(context).data(imageUrl).crossfade(true).build(),
-                    // Reminder: Replace R.drawable.img_placeholder_team with your actual placeholder
-                    placeholder = painterResource(id = R.drawable.__t_33pnkrfv_vlnxkbrsnya),
+                    placeholder = painterResource(id = R.drawable.baseline_groups_24),
                     error = painterResource(id = R.drawable.__t_33pnkrfv_vlnxkbrsnya),
                     contentDescription = team.namatim,
                     modifier = Modifier.fillMaxSize(),
@@ -413,57 +302,6 @@ fun LoadingStateTeamList() {
             CircularProgressIndicator(color = primaryAppColorTeamList)
             Spacer(modifier = Modifier.height(16.dp))
             Text("Loading teams...", color = Color.White, fontSize = 16.sp)
-        }
-    }
-}
-
-@Composable
-fun ErrorState(
-    error: String,
-    onRetry: () -> Unit
-) {
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp), // Add padding to the Box
-        contentAlignment = Alignment.Center
-    ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
-        ) {
-            Icon(
-                imageVector = Icons.Filled.ErrorOutline,
-                contentDescription = "Error",
-                tint = Color.Red,
-                modifier = Modifier.size(48.dp)
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-            Text(
-                text = "Oops! Something went wrong.", // More user-friendly
-                color = Color.White,
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold,
-                textAlign = TextAlign.Center,
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = error, // The specific error message
-                color = Color.LightGray,
-                fontSize = 14.sp,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.padding(horizontal = 16.dp)
-            )
-            Spacer(modifier = Modifier.height(24.dp))
-            Button(
-                onClick = onRetry,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFF5A5AFF)
-                ),
-                shape = RoundedCornerShape(12.dp)
-            ) {
-                Text("Retry", color = Color.White)
-            }
         }
     }
 }

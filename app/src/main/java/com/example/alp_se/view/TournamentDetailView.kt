@@ -71,7 +71,7 @@ fun TournamentDetailView(
     token: String
 ) {
     val context = LocalContext.current
-    val fullImageUrl = "http://192.168.88.32:3000/${tournament.image}"
+    val fullImageUrl = "http://192.168.81.69:3000/${tournament.image}"
     val registrationStatus by tournamentViewModel.registrationStatusMap.collectAsState()
     val isRegistered = registrationStatus[tournament.TournamentID] ?: false
 

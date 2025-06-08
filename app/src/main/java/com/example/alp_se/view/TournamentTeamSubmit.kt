@@ -39,7 +39,6 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -54,35 +53,26 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.example.alp_se.R
 import com.example.alp_se.models.Team
 import com.example.alp_se.models.TournamentResponse
+import com.example.alp_se.uiStates.TeamDataStatusUIState
 import com.example.alp_se.viewModels.TeamViewModel
 import com.example.alp_se.viewModels.TournamentViewModel
 
+
 val pageBackgroundBrush = Brush.verticalGradient(
-    colors = listOf(
-        Color(0xFF0F0F23),
-        Color(0xFF1A1A2E),
-        Color(0xFF16213E)
-    )
+    colors = listOf(Color(0xFF0F0F23), Color(0xFF1A1A2E), Color(0xFF16213E))
 )
-
 val headerBackgroundBrush = Brush.horizontalGradient(
-    colors = listOf(
-        Color(0xFF6C63FF),
-        Color(0xFF9C88FF),
-        Color(0xFF6C63FF)
-    )
+    colors = listOf(Color(0xFF6C63FF), Color(0xFF9C88FF), Color(0xFF6C63FF))
 )
-
 val primaryAccentColor = Color(0xFF6C63FF)
-val cardBackgroundColor = Color(0xFF2D2D3D) // For unselected cards
-val secondaryTextColor = Color(0xFFB0B3B8) // For less prominent text
+val cardBackgroundColor = Color(0xFF2D2D3D)
+val secondaryTextColor = Color(0xFFB0B3B8)
 
 @Composable
 fun TournamentTeamSubmit(
@@ -90,31 +80,30 @@ fun TournamentTeamSubmit(
     navController: NavController,
     tournamentViewModel: TournamentViewModel,
     token: String,
-    teamViewModel: TeamViewModel = viewModel()
+    teamViewModel: TeamViewModel
 ) {
     var selectedTeam by remember { mutableStateOf<Team?>(null) }
     var isSubmitting by remember { mutableStateOf(false) }
-    val coroutineScope = rememberCoroutineScope()
     val context = LocalContext.current
 
-    val uiState by teamViewModel.uiState.collectAsState()
+    val uiState = teamViewModel.uiState
+    val teams by teamViewModel.teamList.collectAsState()
 
     LaunchedEffect(Unit) {
-        teamViewModel.loadTeams()
+        teamViewModel.loadTeams(token)
     }
 
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(pageBackgroundBrush) // Use gradient background
+            .background(pageBackgroundBrush)
     ) {
-        // Top Navigation - Styled like TournamentView's header
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .align(Alignment.TopCenter)
-                .background(headerBackgroundBrush) // Use header gradient
-                .padding(vertical = 16.dp), // Adjusted padding
+                .background(headerBackgroundBrush)
+                .padding(vertical = 16.dp),
             contentAlignment = Alignment.Center
         ) {
             Row(
@@ -132,13 +121,12 @@ fun TournamentTeamSubmit(
                             Color.White.copy(alpha = 0.1f),
                             CircleShape
                         )
-                        .padding(6.dp) // Adjusted padding for logo
+                        .padding(6.dp)
                 )
-                // Spacer can be added if an icon is on the right, for now title is centered below
             }
             Text(
                 text = "Tournament Registration",
-                fontSize = 22.sp, // Consistent font size
+                fontSize = 22.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color.White,
                 textAlign = TextAlign.Center
@@ -148,96 +136,72 @@ fun TournamentTeamSubmit(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(
-                    top = 80.dp,
-                    bottom = 16.dp,
-                    start = 16.dp,
-                    end = 16.dp
-                ) // Adjusted top padding
+                .padding(top = 80.dp, bottom = 16.dp, start = 16.dp, end = 16.dp)
         ) {
-            // Tournament Title
             Text(
                 text = tournament.nama_tournament,
-                fontSize = 24.sp, // Slightly larger title
+                fontSize = 24.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color.White,
-                modifier = Modifier
-                    .padding(bottom = 16.dp)
-                    .align(Alignment.CenterHorizontally)
+                modifier = Modifier.padding(bottom = 16.dp).align(Alignment.CenterHorizontally)
             )
 
-            // Selected team display
             selectedTeam?.let { team ->
                 Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(bottom = 16.dp),
-                    colors = CardDefaults.cardColors(containerColor = primaryAccentColor.copy(alpha = 0.8f)), // Use accent color
-                    shape = RoundedCornerShape(12.dp) // Softer corners
+                    modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
+                    colors = CardDefaults.cardColors(containerColor = primaryAccentColor.copy(alpha = 0.8f)),
+                    shape = RoundedCornerShape(12.dp)
                 ) {
                     Text(
                         text = "Selected Team: ${team.namatim}",
                         color = Color.White,
                         fontSize = 16.sp,
-                        fontWeight = FontWeight.SemiBold, // Adjusted weight
+                        fontWeight = FontWeight.SemiBold,
                         modifier = Modifier.padding(16.dp)
                     )
                 }
             }
 
-            // Team List Section
             Text(
-                text = "Select Your Team:", // Changed text for clarity
+                text = "Select Your Team:",
                 color = Color.White,
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.padding(bottom = 12.dp)
             )
 
-            // Content based on state
             Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f) // Ensure this box takes available space
+                modifier = Modifier.fillMaxWidth().weight(1f),
+                contentAlignment = Alignment.Center
             ) {
-                when {
-                    uiState.isLoading -> {
-                        LoadingStateTeamList() // Ensure this is styled consistently
+                when (uiState) {
+                    is TeamDataStatusUIState.Loading -> {
+                        LoadingStateTeamList()
                     }
-
-                    uiState.error != null -> {
-                        ErrorState( // Ensure this is styled consistently
-                            error = uiState.error!!,
-                            onRetry = {
-                                teamViewModel.clearError()
-                                teamViewModel.loadTeams()
-                            }
+                    is TeamDataStatusUIState.Failed -> {
+                        // Gunakan Composable ErrorStateTeamList yang sudah ada
+                        ErrorStateTeamList(
+                            error = uiState.errorMessage,
+                            onRetry = { teamViewModel.loadTeams(token) } // Perbaiki onRetry
                         )
                     }
-
-                    uiState.teams.isEmpty() && !uiState.isLoading -> { // More specific check for empty
-                        EmptyTeamListState { // Provide a way to perhaps create a team or refresh
-                            teamViewModel.loadTeams()
+                    is TeamDataStatusUIState.Success -> {
+                        if (teams.isEmpty()) {
+                            EmptyTeamListState(onRetry = { teamViewModel.loadTeams(token) })
+                        } else {
+                            SelectableTeamList(
+                                teams = teams,
+                                selectedTeam = selectedTeam,
+                                onTeamSelect = { team -> selectedTeam = team }
+                            )
                         }
                     }
-
-                    else -> {
-                        SelectableTeamList(
-                            teams = uiState.displayTeams.takeIf { it.isNotEmpty() }
-                                ?: uiState.teams, // Ensure displayTeams is used if available
-                            selectedTeam = selectedTeam,
-                            onTeamSelect = { team ->
-                                selectedTeam = team
-                            },
-                            getImageUrl = { imagePath ->
-                                teamViewModel.getImageUrl(imagePath)
-                            }
-                        )
+                    is TeamDataStatusUIState.Start -> {
+                        LoadingStateTeamList()
                     }
                 }
             }
 
-            // Submit button
             Button(
                 onClick = {
                     selectedTeam?.let { team ->
@@ -248,22 +212,14 @@ fun TournamentTeamSubmit(
                             token = token,
                             onSuccess = {
                                 isSubmitting = false
-                                Toast.makeText(
-                                    context,
-                                    "Successfully registered team '${team.namatim}'!",
-                                    Toast.LENGTH_SHORT
-                                ).show()
+                                Toast.makeText(context, "Successfully registered team '${team.namatim}'!", Toast.LENGTH_SHORT).show()
                                 navController.navigate("Tournament") {
                                     popUpTo("Tournament") { inclusive = true }
                                 }
                             },
                             onError = { errorMessage ->
                                 isSubmitting = false
-                                Toast.makeText(
-                                    context,
-                                    "Failed to register: $errorMessage",
-                                    Toast.LENGTH_SHORT
-                                ).show()
+                                Toast.makeText(context, "Failed to register: $errorMessage", Toast.LENGTH_SHORT).show()
                             }
                         )
                     }
@@ -273,38 +229,24 @@ fun TournamentTeamSubmit(
                     containerColor = primaryAccentColor,
                     disabledContainerColor = Color.Gray.copy(alpha = 0.5f)
                 ),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(56.dp)
-                    .padding(vertical = 8.dp),
+                modifier = Modifier.fillMaxWidth().height(56.dp).padding(vertical = 8.dp),
                 shape = RoundedCornerShape(12.dp)
             ) {
                 if (isSubmitting) {
-                    CircularProgressIndicator(
-                        color = Color.White,
-                        modifier = Modifier.size(24.dp),
-                        strokeWidth = 3.dp
-                    )
+                    CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp), strokeWidth = 3.dp)
                 } else {
-                    Text(
-                        text = "Register",
-                        color = Color.White,
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold
-                    )
+                    Text("Register", color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold)
                 }
             }
         }
     }
 }
 
-
 @Composable
 fun SelectableTeamList(
     teams: List<Team>,
     selectedTeam: Team?,
-    onTeamSelect: (Team) -> Unit,
-    getImageUrl: (String) -> String
+    onTeamSelect: (Team) -> Unit
 ) {
     if (teams.isEmpty()) {
         EmptyTeamListState(onRetry = {})
@@ -315,11 +257,12 @@ fun SelectableTeamList(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             items(teams, key = { it.TeamId }) { team ->
+                val imageUrl = "http://192.168.81.69:3000${team.image}"
                 SelectableTeamCard(
                     team = team,
                     isSelected = selectedTeam?.TeamId == team.TeamId,
                     onTeamSelect = { onTeamSelect(team) },
-                    imageUrl = getImageUrl(team.image)
+                    imageUrl = imageUrl
                 )
             }
         }
@@ -401,7 +344,6 @@ fun SelectableTeamCard(
     }
 }
 
-
 @Composable
 fun EmptyTeamListState(onRetry: () -> Unit) {
     Box(
@@ -411,11 +353,10 @@ fun EmptyTeamListState(onRetry: () -> Unit) {
         contentAlignment = Alignment.Center
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Image(
+            Icon(
                 imageVector = Icons.Filled.PeopleOutline,
                 contentDescription = "No teams available",
                 modifier = Modifier.size(100.dp),
-                colorFilter = androidx.compose.ui.graphics.ColorFilter.tint(secondaryTextColor)
             )
             Spacer(modifier = Modifier.height(20.dp))
             Text(

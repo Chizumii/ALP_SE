@@ -1,206 +1,166 @@
-    package com.example.alp_se.viewModels
+package com.example.alp_se.viewModels
 
-    import android.content.Context
-    import android.net.Uri
-    import androidx.lifecycle.ViewModel
-    import androidx.lifecycle.ViewModelProvider
-    import androidx.lifecycle.viewModelScope
-    import androidx.lifecycle.viewmodel.initializer
-    import androidx.lifecycle.viewmodel.viewModelFactory
-    import com.example.alp_se.EshypeApplication
-    import com.example.alp_se.models.*
-    import com.example.alp_se.services.TeamService
-    import com.example.alp_se.uiStates.TeamUIState
-    import kotlinx.coroutines.Job
-    import kotlinx.coroutines.delay
-    import kotlinx.coroutines.flow.MutableStateFlow
-    import kotlinx.coroutines.flow.StateFlow
-    import kotlinx.coroutines.flow.asStateFlow
-    import kotlinx.coroutines.launch
+import android.content.Context
+import android.net.Uri
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
+import androidx.navigation.NavController
+import com.example.alp_se.EshypeApplication
+import com.example.alp_se.models.ErrorModel
+import com.example.alp_se.models.Team
+import com.example.alp_se.repositories.TeamRepository
+import com.example.alp_se.uiStates.TeamDataStatusUIState
+import com.google.gson.Gson
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
+import java.io.IOException
 
-    class TeamViewModel(
-        private val teamService: TeamService
-    ) : ViewModel() {
+class TeamViewModel(
+    private val teamRepository: TeamRepository
+) : ViewModel() {
 
-        private val _uiState = MutableStateFlow(TeamUIState())
-        val uiState: StateFlow<TeamUIState> = _uiState.asStateFlow()
+    var uiState: TeamDataStatusUIState by mutableStateOf(TeamDataStatusUIState.Start)
+        private set
 
-        private var searchJob: Job? = null
+    private val _teamList = MutableStateFlow<List<Team>>(emptyList())
+    val teamList: StateFlow<List<Team>> = _teamList.asStateFlow()
 
-        init {
-            loadTeams()
-        }
+    var nameTeamInput by mutableStateOf("")
+    var imageUriInput by mutableStateOf<Uri?>(null)
 
-        fun loadTeams() {
-            viewModelScope.launch {
-                _uiState.value = _uiState.value.copy(isLoading = true, error = null)
+    var editingTeamId by mutableStateOf<Int?>(null)
 
-                teamService.getAllTeams().fold(
-                    onSuccess = { teams ->
-                        _uiState.value = _uiState.value.copy(
-                            teams = teams,
-                            filteredTeams = teams,
-                            isLoading = false,
-                            error = null
-                        )
-                    },
-                    onFailure = { error ->
-                        _uiState.value = _uiState.value.copy(
-                            isLoading = false,
-                            error = error.message ?: "Unknown error occurred"
-                        )
-                    }
-                )
-            }
-        }
+    init {
+        val token = "7a1ce296-ab8e-40ce-bce8-add67c22d965"
+        loadTeams(token)
+    }
 
-        fun searchTeams(query: String) {
-            _uiState.value = _uiState.value.copy(searchQuery = query)
-
-            searchJob?.cancel()
-            searchJob = viewModelScope.launch {
-                if (query.isBlank()) {
-                    _uiState.value = _uiState.value.copy(
-                        filteredTeams = _uiState.value.teams,
-                        isSearching = false
-                    )
-                    return@launch
+    fun loadTeams(token: String) {
+        viewModelScope.launch {
+            uiState = TeamDataStatusUIState.Loading
+            try {
+                val response = teamRepository.getAllTeams(token)
+                if (response.isSuccessful) {
+                    val teams = response.body()?.data ?: emptyList()
+                    _teamList.value = teams
+                    uiState = TeamDataStatusUIState.Success(teams)
+                } else {
+                    val errorMessage = "Error fetching teams: ${response.code()}"
+                    uiState = TeamDataStatusUIState.Failed(errorMessage)
                 }
-
-                _uiState.value = _uiState.value.copy(isSearching = true)
-
-                // Add a small delay to avoid too many API calls while typing
-                delay(300)
-
-                teamService.searchTeams(query).fold(
-                    onSuccess = { filteredTeams ->
-                        _uiState.value = _uiState.value.copy(
-                            filteredTeams = filteredTeams,
-                            isSearching = false
-                        )
-                    },
-                    onFailure = { error ->
-                        _uiState.value = _uiState.value.copy(
-                            isSearching = false,
-                            error = error.message ?: "Search failed"
-                        )
-                    }
-                )
-            }
-        }
-
-        fun createTeam(namatim: String, imageUri: Uri, context: Context) {
-            viewModelScope.launch {
-                val validationError = teamService.validateTeamName(namatim)
-                if (validationError != null) {
-                    _uiState.value = _uiState.value.copy(error = validationError)
-                    return@launch
-                }
-
-                _uiState.value = _uiState.value.copy(isCreating = true, error = null)
-
-                teamService.createTeam(namatim, imageUri, context).fold(
-                    onSuccess = { newTeam ->
-                        val updatedTeams = _uiState.value.teams + newTeam
-                        _uiState.value = _uiState.value.copy(
-                            teams = updatedTeams,
-                            filteredTeams = updatedTeams,
-                            isCreating = false,
-                            createSuccess = true,
-                            error = null
-                        )
-                    },
-                    onFailure = { error ->
-                        _uiState.value = _uiState.value.copy(
-                            isCreating = false,
-                            error = error.message ?: "Failed to create team"
-                        )
-                    }
-                )
-            }
-        }
-
-        fun updateTeam(id: Int, namatim: String, imageUri: Uri, context: Context) {
-            viewModelScope.launch {
-                val validationError = teamService.validateTeamName(namatim)
-                if (validationError != null) {
-                    _uiState.value = _uiState.value.copy(error = validationError)
-                    return@launch
-                }
-
-                _uiState.value = _uiState.value.copy(isUpdating = true, error = null)
-
-                teamService.updateTeam(id, namatim, imageUri, context).fold(
-                    onSuccess = { updatedTeam ->
-                        val updatedTeams = _uiState.value.teams.map { team ->
-                            if (team.TeamId == id) updatedTeam else team
-                        }
-                        _uiState.value = _uiState.value.copy(
-                            teams = updatedTeams,
-                            filteredTeams = updatedTeams,
-                            isUpdating = false,
-                            updateSuccess = true,
-                            error = null
-                        )
-                    },
-                    onFailure = { error ->
-                        _uiState.value = _uiState.value.copy(
-                            isUpdating = false,
-                            error = error.message ?: "Failed to update team"
-                        )
-                    }
-                )
-            }
-        }
-
-        fun deleteTeam(id: Int) {
-            viewModelScope.launch {
-                _uiState.value = _uiState.value.copy(isDeleting = true, error = null)
-
-                teamService.deleteTeam(id).fold(
-                    onSuccess = {
-                        val updatedTeams = _uiState.value.teams.filter { it.TeamId != id }
-                        _uiState.value = _uiState.value.copy(
-                            teams = updatedTeams,
-                            filteredTeams = updatedTeams,
-                            isDeleting = false,
-                            deleteSuccess = true,
-                            error = null
-                        )
-                    },
-                    onFailure = { error ->
-                        _uiState.value = _uiState.value.copy(
-                            isDeleting = false,
-                            error = error.message ?: "Failed to delete team"
-                        )
-                    }
-                )
-            }
-        }
-
-        fun clearError() {
-            _uiState.value = _uiState.value.copy(error = null)
-        }
-
-        fun clearSuccessFlags() {
-            _uiState.value = _uiState.value.copy(
-                createSuccess = false,
-                updateSuccess = false,
-                deleteSuccess = false
-            )
-        }
-
-        fun getImageUrl(imagePath: String): String {
-            return teamService.getImageUrl(imagePath)
-        }
-
-        companion object {
-            val Factory: ViewModelProvider.Factory = viewModelFactory {
-                initializer {
-                    val application = (this[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY] as EshypeApplication)
-                    val teamService = TeamService(application.container.teamRepository)
-                    TeamViewModel(teamService = teamService)
-                }
+            } catch (e: IOException) {
+                uiState = TeamDataStatusUIState.Failed("Network Error: ${e.message}")
+            } catch (e: Exception) {
+                uiState = TeamDataStatusUIState.Failed("An unexpected error occurred: ${e.message}")
             }
         }
     }
+
+    fun createTeam(context: Context, navController: NavController) {
+        if (nameTeamInput.isBlank()) {
+            uiState = TeamDataStatusUIState.Failed("Team name cannot be empty.")
+            return
+        }
+        if (imageUriInput == null) {
+            uiState = TeamDataStatusUIState.Failed("Team image is required.")
+            return
+        }
+
+        viewModelScope.launch {
+            uiState = TeamDataStatusUIState.Loading
+            try {
+                val response = teamRepository.createTeam(context, nameTeamInput, imageUriInput!!)
+                if (response.isSuccessful) {
+                    clearInputs()
+                    navController.popBackStack()
+                } else {
+                    val errorBody = response.errorBody()?.string()
+                    val errorModel = Gson().fromJson(errorBody, ErrorModel::class.java)
+                    uiState = TeamDataStatusUIState.Failed(errorModel.errors ?: "Failed to create team.")
+                }
+            } catch (e: IOException) {
+                uiState = TeamDataStatusUIState.Failed("Network error: ${e.message}")
+            }
+        }
+    }
+
+    fun updateTeam(context: Context, navController: NavController) {
+        val teamId = editingTeamId
+        if (teamId == null) {
+            uiState = TeamDataStatusUIState.Failed("No team selected for update.")
+            return
+        }
+        if (nameTeamInput.isBlank()) {
+            uiState = TeamDataStatusUIState.Failed("Team name cannot be empty.")
+            return
+        }
+
+        viewModelScope.launch {
+            uiState = TeamDataStatusUIState.Loading
+            try {
+                val response = teamRepository.updateTeam(context, teamId, nameTeamInput, imageUriInput)
+                if (response.isSuccessful) {
+                    clearInputs()
+                    navController.popBackStack()
+                } else {
+                    val errorBody = response.errorBody()?.string()
+                    val errorModel = Gson().fromJson(errorBody, ErrorModel::class.java)
+                    uiState = TeamDataStatusUIState.Failed(errorModel.errors ?: "Failed to update team.")
+                }
+            } catch (e: IOException) {
+                uiState = TeamDataStatusUIState.Failed("Network error: ${e.message}")            }
+        }
+    }
+
+    fun deleteTeam(id: Int, token: String) {
+        viewModelScope.launch {
+            uiState = TeamDataStatusUIState.Loading
+            try {
+                val response = teamRepository.deleteTeam(id, token)
+                if (response.isSuccessful) {
+                    // Muat ulang daftar tim setelah berhasil menghapus
+                    loadTeams(token)
+                } else {
+                    val errorMessage = "Failed to delete team: ${response.code()}"
+                    uiState = TeamDataStatusUIState.Failed(errorMessage)
+                }
+            } catch (e: IOException) {
+                uiState = TeamDataStatusUIState.Failed("Network Error: ${e.message}")
+            }
+        }
+    }
+    fun initializeForEdit(team: Team?) {
+        if (team != null) {
+            editingTeamId = team.TeamId
+            nameTeamInput = team.namatim
+
+            imageUriInput = null
+        } else {
+            clearInputs()
+        }
+    }
+
+    private fun clearInputs() {
+        editingTeamId = null
+        nameTeamInput = ""
+        imageUriInput = null
+    }
+
+    companion object {
+        val Factory: ViewModelProvider.Factory = viewModelFactory {
+            initializer {
+                val application = (this[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY] as EshypeApplication)
+                val teamRepository = application.container.teamRepository
+                TeamViewModel(teamRepository = teamRepository)
+            }
+        }
+    }
+}

@@ -189,7 +189,6 @@ class TournamentViewModel(
         }
     }
 
-    // ADD THIS NEW METHOD that your TournamentTeamSubmit screen is calling
     fun registerTeamWithId(
         tournamentId: Int,
         teamId: Int,
