@@ -31,6 +31,10 @@ import com.example.alp_se.models.Team
 import com.example.alp_se.navigation.Screen
 import com.example.alp_se.uiStates.TeamDataStatusUIState
 import com.example.alp_se.viewModels.TeamViewModel
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 
 val pageBackgroundBrushTeamList = Brush.verticalGradient(
@@ -55,11 +59,22 @@ fun TeamView(
     val teams by teamViewModel.teamList.collectAsState()
     var showDeleteDialog by remember { mutableStateOf<Team?>(null) }
     var searchQuery by remember { mutableStateOf("") }
+    var isSearching by remember { mutableStateOf(false) }
+    val coroutineScope = rememberCoroutineScope()
 
     val token = "7a1ce296-ab8e-40ce-bce8-add67c22d965"
 
     LaunchedEffect(navController.currentBackStackEntry) {
         teamViewModel.loadTeams(token)
+    }
+
+    // Debounce search
+    LaunchedEffect(searchQuery) {
+        isSearching = true
+        coroutineScope.launch {
+            delay(300) // 300ms debounce
+            isSearching = false
+        }
     }
 
     val filteredTeams = remember(searchQuery, teams) {
@@ -78,20 +93,57 @@ fun TeamView(
         Column(modifier = Modifier.fillMaxSize()) {
             TeamListHeader(onRefresh = { teamViewModel.loadTeams(token) })
 
+            // Enhanced Search Bar
             OutlinedTextField(
                 value = searchQuery,
                 onValueChange = { searchQuery = it },
                 placeholder = { Text("Search teams...", color = secondaryTextColorTeamList.copy(alpha = 0.7f)) },
-                leadingIcon = { Icon(Icons.Default.Search, "Search", tint = secondaryTextColorTeamList) },
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
+                leadingIcon = { 
+                    if (isSearching) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(24.dp),
+                            color = primaryAppColorTeamList,
+                            strokeWidth = 2.dp
+                        )
+                    } else {
+                        Icon(Icons.Default.Search, "Search", tint = secondaryTextColorTeamList)
+                    }
+                },
+                trailingIcon = {
+                    if (searchQuery.isNotEmpty()) {
+                        IconButton(onClick = { searchQuery = "" }) {
+                            Icon(
+                                Icons.Default.Clear,
+                                "Clear Search",
+                                tint = secondaryTextColorTeamList
+                            )
+                        }
+                    }
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 12.dp),
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedTextColor = Color.White, unfocusedTextColor = Color.White,
-                    focusedContainerColor = textFieldBackgroundColorTeamList, unfocusedContainerColor = textFieldBackgroundColorTeamList,
-                    cursorColor = primaryAppColorTeamList, focusedBorderColor = primaryAppColorTeamList,
+                    focusedTextColor = Color.White,
+                    unfocusedTextColor = Color.White,
+                    focusedContainerColor = textFieldBackgroundColorTeamList,
+                    unfocusedContainerColor = textFieldBackgroundColorTeamList,
+                    cursorColor = primaryAppColorTeamList,
+                    focusedBorderColor = primaryAppColorTeamList,
                     unfocusedBorderColor = cardBackgroundColorTeamList,
                 ),
                 shape = defaultCornerShapeTeamList
             )
+
+            // Search Results Count
+            if (searchQuery.isNotEmpty() && filteredTeams.isNotEmpty()) {
+                Text(
+                    text = "Found ${filteredTeams.size} team${if (filteredTeams.size != 1) "s" else ""}",
+                    color = secondaryTextColorTeamList,
+                    fontSize = 14.sp,
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
+                )
+            }
 
             Box(modifier = Modifier.weight(1f).padding(horizontal = 16.dp)) {
                 when (uiState) {
@@ -102,8 +154,14 @@ fun TeamView(
                     )
                     is TeamDataStatusUIState.Success -> {
                         if (filteredTeams.isEmpty()) {
-                            if (searchQuery.isNotBlank()) NoSearchResultsStateTeamList(searchQuery)
-                            else EmptyStateTeamList()
+                            if (searchQuery.isNotBlank()) {
+                                NoSearchResultsStateTeamList(
+                                    searchQuery = searchQuery,
+                                    onClearSearch = { searchQuery = "" }
+                                )
+                            } else {
+                                EmptyStateTeamList()
+                            }
                         } else {
                             TeamListBody(
                                 teams = filteredTeams,
@@ -374,31 +432,46 @@ fun EmptyStateTeamList() {
 }
 
 @Composable
-fun NoSearchResultsStateTeamList(searchQuery: String) {
-    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Icon(
-                Icons.Filled.SearchOff,
-                contentDescription = "No results",
-                tint = secondaryTextColorTeamList,
-                modifier = Modifier.size(72.dp)
+fun NoSearchResultsStateTeamList(
+    searchQuery: String,
+    onClearSearch: () -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Icon(
+            imageVector = Icons.Default.SearchOff,
+            contentDescription = "No Results",
+            modifier = Modifier.size(64.dp),
+            tint = secondaryTextColorTeamList
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+        Text(
+            text = "No teams found for \"$searchQuery\"",
+            color = Color.White,
+            fontSize = 18.sp,
+            fontWeight = FontWeight.Medium,
+            textAlign = TextAlign.Center
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(
+            text = "Try adjusting your search or create a new team",
+            color = secondaryTextColorTeamList,
+            fontSize = 14.sp,
+            textAlign = TextAlign.Center
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+        TextButton(
+            onClick = onClearSearch,
+            colors = ButtonDefaults.textButtonColors(
+                contentColor = primaryAppColorTeamList
             )
-            Spacer(modifier = Modifier.height(16.dp))
-            Text(
-                "No results for \"$searchQuery\"",
-                color = Color.White,
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold,
-                textAlign = TextAlign.Center
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                "Try different keywords or check spelling.",
-                color = secondaryTextColorTeamList,
-                fontSize = 14.sp,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.padding(horizontal = 32.dp)
-            )
+        ) {
+            Text("Clear Search")
         }
     }
 }

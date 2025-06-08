@@ -37,6 +37,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -62,22 +66,55 @@ fun TournamentListView(
 ) {
     val tournamentListState by tournamentViewModel.tounament.collectAsState()
     var searchQuery by remember { mutableStateOf("") }
+    var isSearching by remember { mutableStateOf(false) }
+    var showSearchSuggestions by remember { mutableStateOf(false) }
     val keyboardController = LocalSoftwareKeyboardController.current
+    val coroutineScope = rememberCoroutineScope()
+
+    // Debounced search query
+    val debouncedSearchQuery by remember(searchQuery) {
+        derivedStateOf {
+            searchQuery
+        }
+    }
+
+    // Search suggestions based on tournament names
+    val searchSuggestions = remember(tournamentListState, searchQuery) {
+        if (searchQuery.length >= 2) {
+            tournamentListState
+                .map { it.nama_tournament }
+                .filter { it.contains(searchQuery, ignoreCase = true) }
+                .take(5)
+        } else {
+            emptyList()
+        }
+    }
+
+    // Enhanced search filtering
+    val filteredTournaments = remember(tournamentListState, debouncedSearchQuery) {
+        if (debouncedSearchQuery.isBlank()) {
+            tournamentListState
+        } else {
+            tournamentListState.filter {
+                val query = debouncedSearchQuery.lowercase()
+                it.nama_tournament.lowercase().contains(query) ||
+                it.description.lowercase().contains(query) ||
+                it.lokasi.lowercase().contains(query) ||
+                it.tipe.lowercase().contains(query)
+            }
+        }
+    }
 
     LaunchedEffect(Unit) {
         tournamentViewModel.fetchTournaments(token)
     }
 
-    val filteredTournaments = remember(tournamentListState, searchQuery) {
-        if (searchQuery.isBlank()) {
-            tournamentListState
-        } else {
-            tournamentListState.filter {
-                it.nama_tournament.contains(searchQuery, ignoreCase = true) ||
-                        it.description.contains(searchQuery, ignoreCase = true) ||
-                        it.lokasi.contains(searchQuery, ignoreCase = true) ||
-                        it.tipe.contains(searchQuery, ignoreCase = true)
-            }
+    // Debounce search
+    LaunchedEffect(searchQuery) {
+        isSearching = true
+        coroutineScope.launch {
+            delay(300) // 300ms debounce
+            isSearching = false
         }
     }
 
@@ -159,56 +196,112 @@ fun TournamentListView(
                 }
             }
 
-            OutlinedTextField(
-                value = searchQuery,
-                onValueChange = {
-                    searchQuery = it
-                },
-                placeholder = {
-                    Text(
-                        text = "Search tournaments...",
-                        color = Color(0xFFB0B3B8)
-                    )
-                },
-                leadingIcon = {
-                    Icon(
-                        imageVector = Icons.Default.Search,
-                        contentDescription = "Search Icon",
-                        tint = Color(0xFF6C63FF)
-                    )
-                },
-                trailingIcon = {
-                    if (searchQuery.isNotEmpty()) {
-                        IconButton(onClick = { searchQuery = "" }) {
-                            Icon(
-                                imageVector = Icons.Default.Refresh,
-                                contentDescription = "Clear Search",
-                                tint = Color(0xFFB0B3B8)
-                            )
-                        }
-                    }
-                },
-                keyboardOptions = KeyboardOptions(
-                    imeAction = ImeAction.Search
-                ),
-                keyboardActions = KeyboardActions(
-                    onSearch = { keyboardController?.hide() }
-                ),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedTextColor = Color.White,
-                    unfocusedTextColor = Color.White,
-                    focusedBorderColor = Color(0xFF6C63FF),
-                    unfocusedBorderColor = Color(0xFF404040),
-                    cursorColor = Color(0xFF6C63FF),
-                    focusedContainerColor = Color(0xFF2D2D3D),
-                    unfocusedContainerColor = Color(0xFF2D2D3D)
-                ),
-                shape = RoundedCornerShape(12.dp),
-                singleLine = true,
+            Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 24.dp, vertical = 16.dp)
-            )
+            ) {
+                OutlinedTextField(
+                    value = searchQuery,
+                    onValueChange = {
+                        searchQuery = it
+                        showSearchSuggestions = it.isNotEmpty()
+                    },
+                    placeholder = {
+                        Text(
+                            text = "Search tournaments...",
+                            color = Color(0xFFB0B3B8)
+                        )
+                    },
+                    leadingIcon = {
+                        if (isSearching) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(24.dp),
+                                color = Color(0xFF6C63FF),
+                                strokeWidth = 2.dp
+                            )
+                        } else {
+                            Icon(
+                                imageVector = Icons.Default.Search,
+                                contentDescription = "Search Icon",
+                                tint = Color(0xFF6C63FF)
+                            )
+                        }
+                    },
+                    trailingIcon = {
+                        if (searchQuery.isNotEmpty()) {
+                            IconButton(onClick = { 
+                                searchQuery = ""
+                                showSearchSuggestions = false
+                            }) {
+                                Icon(
+                                    imageVector = Icons.Default.Refresh,
+                                    contentDescription = "Clear Search",
+                                    tint = Color(0xFFB0B3B8)
+                                )
+                            }
+                        }
+                    },
+                    keyboardOptions = KeyboardOptions(
+                        imeAction = ImeAction.Search
+                    ),
+                    keyboardActions = KeyboardActions(
+                        onSearch = { 
+                            keyboardController?.hide()
+                            showSearchSuggestions = false
+                        }
+                    ),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedTextColor = Color.White,
+                        unfocusedTextColor = Color.White,
+                        focusedBorderColor = Color(0xFF6C63FF),
+                        unfocusedBorderColor = Color(0xFF404040),
+                        cursorColor = Color(0xFF6C63FF),
+                        focusedContainerColor = Color(0xFF2D2D3D),
+                        unfocusedContainerColor = Color(0xFF2D2D3D)
+                    ),
+                    shape = RoundedCornerShape(12.dp),
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                // Search suggestions dropdown
+                if (showSearchSuggestions && searchSuggestions.isNotEmpty()) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(
+                                color = Color(0xFF2D2D3D),
+                                shape = RoundedCornerShape(bottomStart = 12.dp, bottomEnd = 12.dp)
+                            )
+                            .padding(vertical = 8.dp)
+                    ) {
+                        Column {
+                            searchSuggestions.forEach { suggestion ->
+                                Text(
+                                    text = suggestion,
+                                    color = Color.White,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clickable {
+                                            searchQuery = suggestion
+                                            showSearchSuggestions = false
+                                            keyboardController?.hide()
+                                        }
+                                        .padding(horizontal = 16.dp, vertical = 12.dp)
+                                )
+                                if (suggestion != searchSuggestions.last()) {
+                                    HorizontalDivider(
+                                        color = Color(0xFF404040),
+                                        thickness = 1.dp,
+                                        modifier = Modifier.padding(horizontal = 16.dp)
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
 
             if (filteredTournaments.isEmpty()) {
                 Box(
@@ -250,28 +343,38 @@ fun TournamentListView(
                     }
                 }
             } else {
-                LazyColumn(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f)
-                        .padding(horizontal = 8.dp),
-                    contentPadding = androidx.compose.foundation.layout.PaddingValues(vertical = 8.dp)
-                ) {
-                    items(filteredTournaments) { tournamentItem ->
-                        val currentRegistrationStatusMap by tournamentViewModel.registrationStatusMap.collectAsState()
-                        val isRegistered = currentRegistrationStatusMap[tournamentItem.TournamentID] ?: false
+                Column {
+                    // Search results count
+                    Text(
+                        text = "Found ${filteredTournaments.size} tournament${if (filteredTournaments.size != 1) "s" else ""}",
+                        color = Color(0xFFB0B3B8),
+                        fontSize = 14.sp,
+                        modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp)
+                    )
+                    
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(1f)
+                            .padding(horizontal = 8.dp),
+                        contentPadding = androidx.compose.foundation.layout.PaddingValues(vertical = 8.dp)
+                    ) {
+                        items(filteredTournaments) { tournamentItem ->
+                            val currentRegistrationStatusMap by tournamentViewModel.registrationStatusMap.collectAsState()
+                            val isRegistered = currentRegistrationStatusMap[tournamentItem.TournamentID] ?: false
 
-                        LaunchedEffect(tournamentItem.TournamentID) {
-                            if (!currentRegistrationStatusMap.containsKey(tournamentItem.TournamentID)) {
-                                tournamentViewModel.checkRegistrationStatus(tournamentItem.TournamentID, token)
+                            LaunchedEffect(tournamentItem.TournamentID) {
+                                if (!currentRegistrationStatusMap.containsKey(tournamentItem.TournamentID)) {
+                                    tournamentViewModel.checkRegistrationStatus(tournamentItem.TournamentID, token)
+                                }
                             }
+                            TournamentCard(
+                                tournament = tournamentItem,
+                                tournamentViewModel = tournamentViewModel,
+                                navController = navController,
+                                isRegistered = isRegistered
+                            )
                         }
-                        TournamentCard(
-                            tournament = tournamentItem,
-                            tournamentViewModel = tournamentViewModel,
-                            navController = navController,
-                            isRegistered = isRegistered
-                        )
                     }
                 }
             }
